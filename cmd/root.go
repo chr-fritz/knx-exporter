@@ -23,8 +23,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var rootCmd *cobra.Command
-var rootCmdOptions *RootOptions
+var rootCmd, rootCmdOptions = NewRootCommand()
 
 type RootOptions struct {
 	configFile string
@@ -38,20 +37,14 @@ func NewRootCommand() (*cobra.Command, *RootOptions) {
 	rootOptions := NewRootOptions()
 	cmd := &cobra.Command{
 		Use:   "knx-exporter",
-		Short: "A brief description of your application",
-		Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		Short: "Exports KNX values to Prometheus",
+		Long: `The KNX Prometheus Exporter is a small bridge to export values measured
+by KNX sensors to Prometheus. It takes the values either from cyclic
+sent "GroupValueWrite" telegrams and can request values itself using
+"GroupValueRead" telegrams.`,
 	}
 
 	cmd.PersistentFlags().StringVar(&rootOptions.configFile, "config", "", "config file (default is $HOME/.knx-exporter.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	cmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	return cmd, rootOptions
 }
@@ -92,6 +85,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd, rootCmdOptions = NewRootCommand()
 	cobra.OnInitialize(rootCmdOptions.initConfig)
 }
