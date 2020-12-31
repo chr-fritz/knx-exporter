@@ -225,3 +225,7 @@ _complete knx-exporter 2>/dev/null
 	_, _ = out.Write([]byte(zshTail))
 	return nil
 }
+
+func init() {
+	rootCmd.AddCommand(NewCompletionCmd())
+}
