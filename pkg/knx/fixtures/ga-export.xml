@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<GroupAddress-Export xmlns="http://knx.org/xml/ga-export/01">
+    <GroupRange Name="A" RangeStart="1" RangeEnd="2047">
+        <GroupRange Name="AA" RangeStart="1" RangeEnd="255">
+            <GroupAddress Name="AAA" Address="0/0/1" Central="true" DPTs="DPT-1"/>
+        </GroupRange>
+        <GroupRange Name="AB" RangeStart="256" RangeEnd="511">
+            <GroupRange Name="ABA" RangeStart="256" RangeEnd="384">
+                <GroupAddress Name="ABAA" Address="0/1/0" Description="AAB" Unfiltered="true" DPTs="DPST-1-1"/>
+            </GroupRange>
+        </GroupRange>
+    </GroupRange>
+    <GroupRange Name="C" RangeEnd="1024" RangeStart="512">
+        <GroupAddress Name="CC" Address="0/1/2" Description="CC" DPTs="DPST-1-1"/>
+        <GroupAddress Name="CC" Address="0/1/3" Description="CD" DPTs="DPST-1-1"/>
+    </GroupRange>
+</GroupAddress-Export>
