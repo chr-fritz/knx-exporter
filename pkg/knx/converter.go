@@ -4,6 +4,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
@@ -85,8 +87,12 @@ func convertAddresses(groupAddresses []export.GroupAddress) map[GroupAddress]Gro
 			continue
 		}
 
+		name, err := normalizeMetricName(ga.Name)
+		if err != nil {
+			logrus.Info("Can not normalize group address name, ", err)
+		}
 		cfg := GroupAddressConfig{
-			Name:       "",
+			Name:       name,
 			Comment:    ga.Name + "\n" + ga.Description,
 			DPT:        ga.DPTs,
 			MetricType: "",
@@ -97,4 +103,24 @@ func convertAddresses(groupAddresses []export.GroupAddress) map[GroupAddress]Gro
 		addressConfigs[address] = cfg
 	}
 	return addressConfigs
+}
+
+var validRegex = regexp.MustCompilePOSIX("^[a-zA-Z_:][a-zA-Z0-9_:]*$")
+var replaceRegex = regexp.MustCompilePOSIX("[^a-zA-Z0-9_:]")
+var latin1Replacer = strings.NewReplacer("Ä", "Ae", "Ü", "Ue", "Ö", "Oe", "ä", "ae", "ü", "ue", "ö", "oe", "ß", "ss")
+
+func normalizeMetricName(name string) (string, error) {
+	if validRegex.MatchString(name) {
+		return name, nil
+	}
+
+	normalized := latin1Replacer.Replace(name)
+	if validRegex.MatchString(normalized) {
+		return normalized, nil
+	}
+	normalized = replaceRegex.ReplaceAllLiteralString(normalized, "_")
+	if !validRegex.MatchString(normalized) {
+		return "", fmt.Errorf("the group address name \"%s\" don't matchs the following regex: [a-zA-Z_:][a-zA-Z0-9_:]*", name)
+	}
+	return normalized, nil
 }
