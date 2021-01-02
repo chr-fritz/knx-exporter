@@ -29,10 +29,10 @@ dockers:
 
     # Templates of the Docker image names.
     image_templates:
-      - "docker.io/chrfritz/knx-exporter:latest"
-      - "docker.io/chrfritz/knx-exporter:{{ .Tag }}"
-      - "docker.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
-      - "docker.io/chrfritz/knx-exporter:v{{ .Major }}"
+      - "quay.io/chrfritz/knx-exporter:latest"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}"
 
     # Skips the docker push. Could be useful if you also do draft releases.
     # If set to auto, the release will not be pushed to the docker repository
@@ -50,6 +50,8 @@ dockers:
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.url=https://github.com/chr-fritz/knx-exporter"
+      - "--label=org.opencontainers.image.licenses=Apache-2.0"
 checksum:
   name_template: 'checksums.txt'
 snapshot:
