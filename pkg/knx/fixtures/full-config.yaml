@@ -1,0 +1,12 @@
+Connection:
+  Type: "Tunnel"
+  Endpoint: "192.168.1.15:3671"
+MetricsPrefix: knx_
+AddressConfigs:
+  0/0/1:
+    Name: dummy_metric
+    DPT: 1.*
+    Export: true
+    MetricType: "counter"
+    ReadActive: true
+    MaxAge: 10m

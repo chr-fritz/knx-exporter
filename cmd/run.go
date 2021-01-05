@@ -15,16 +15,20 @@
 package cmd
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/chr-fritz/knx-exporter/pkg/knx"
 	"github.com/chr-fritz/knx-exporter/pkg/metrics"
 )
 
 const RunPortParm = "exporter.port"
+const RunConfigFileParm = "exporter.configFile"
 
 type RunOptions struct {
-	port uint16
+	port       uint16
+	configFile string
 }
 
 func NewRunOptions() *RunOptions {
@@ -43,13 +47,29 @@ func NewRunCommand() *cobra.Command {
 		RunE:  runOptions.run,
 	}
 	cmd.Flags().Uint16VarP(&runOptions.port, "port", "p", 8080, "The port where all metrics should be exported.")
+	cmd.Flags().StringVarP(&runOptions.configFile, "configFile", "f", "config.yaml", "The knx configuration file.")
 	_ = viper.BindPFlag(RunPortParm, cmd.Flags().Lookup("port"))
+	_ = viper.BindPFlag(RunConfigFileParm, cmd.Flags().Lookup("configFile"))
 	return &cmd
 }
 
 func (i *RunOptions) run(cmd *cobra.Command, args []string) error {
 	exporter := metrics.NewExporter(i.port)
+	metricsExporter, err := knx.NewMetricsExporter(i.configFile)
 
+	if err != nil {
+		return err
+	}
+
+	collectors := metricsExporter.RegisterMetrics()
+	exporter.MustRegister(collectors...)
+
+	go func() {
+		if err := metricsExporter.Run(); err != nil {
+			logrus.Warn(err)
+		}
+	}()
+	defer metricsExporter.Close()
 	return exporter.Run()
 }
 
