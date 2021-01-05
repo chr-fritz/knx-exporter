@@ -72,3 +72,38 @@ func Test_normalizeMetricName(t *testing.T) {
 		})
 	}
 }
+
+func Test_normalizeDPTs(t *testing.T) {
+	tests := []struct {
+		name    string
+		dpt     string
+		want    string
+		wantErr bool
+	}{
+		{"DPST-1-1", "DPST-1-1", "1.001", false},
+		{"DPST-1-5", "DPST-1-5", "1.005", false},
+		{"DPST-1-7", "DPST-1-7", "1.007", false},
+		{"DPST-1-8", "DPST-1-8", "1.008", false},
+		{"DPST-20-102", "DPST-20-102", "20.102", false},
+		{"DPST-3-7", "DPST-3-7", "3.007", false},
+		{"DPST-5-1", "DPST-5-1", "5.001", false},
+		{"DPST-7-7", "DPST-7-7", "7.007", false},
+		{"DPST-9-1", "DPST-9-1", "9.001", false},
+		{"DPT-1", "DPT-1", "1.*", false},
+		{"DPT-13", "DPT-13", "13.*", false},
+		{"DPT-5", "DPT-5", "5.*", false},
+		{"DPT-7", "DPT-7", "7.*", false},
+		{"DPT-9", "DPT-9", "9.*", false},
+		{"invalid", "DPT9", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := normalizeDPTs(tt.dpt)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("normalizeDPTs() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

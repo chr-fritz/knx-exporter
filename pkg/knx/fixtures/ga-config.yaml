@@ -7,7 +7,7 @@ AddressConfigs:
     Name: AAA
     Comment: |
       AAA
-    DPT: DPT-1
+    DPT: "1.*"
     Export: false
     MetricType: ""
   0/1/0:
@@ -15,7 +15,7 @@ AddressConfigs:
     Comment: |-
       ABAA
       AAB
-    DPT: DPST-1-1
+    DPT: "1.001"
     Export: false
     MetricType: ""
   0/1/2:
@@ -23,7 +23,7 @@ AddressConfigs:
     Comment: |-
       CC
       CC
-    DPT: DPST-1-1
+    DPT: "1.001"
     Export: false
     MetricType: ""
   0/1/3:
@@ -31,6 +31,6 @@ AddressConfigs:
     Comment: |-
       CC
       CD
-    DPT: DPST-1-1
+    DPT: "1.001"
     Export: false
     MetricType: ""

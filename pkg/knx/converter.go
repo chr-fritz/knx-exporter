@@ -91,10 +91,14 @@ func convertAddresses(groupAddresses []export.GroupAddress) map[GroupAddress]Gro
 		if err != nil {
 			logrus.Info("Can not normalize group address name, ", err)
 		}
+		dpt, err := normalizeDPTs(ga.DPTs)
+		if err != nil {
+			logrus.Info("Can not normalize data type, ", err)
+		}
 		cfg := GroupAddressConfig{
 			Name:       name,
 			Comment:    ga.Name + "\n" + ga.Description,
-			DPT:        ga.DPTs,
+			DPT:        dpt,
 			MetricType: "",
 			Export:     false,
 			ReadActive: false,
@@ -105,22 +109,40 @@ func convertAddresses(groupAddresses []export.GroupAddress) map[GroupAddress]Gro
 	return addressConfigs
 }
 
-var validRegex = regexp.MustCompilePOSIX("^[a-zA-Z_:][a-zA-Z0-9_:]*$")
-var replaceRegex = regexp.MustCompilePOSIX("[^a-zA-Z0-9_:]")
+var validMetricRegex = regexp.MustCompilePOSIX("^[a-zA-Z_:][a-zA-Z0-9_:]*$")
+var replaceMetricRegex = regexp.MustCompilePOSIX("[^a-zA-Z0-9_:]")
 var latin1Replacer = strings.NewReplacer("Ä", "Ae", "Ü", "Ue", "Ö", "Oe", "ä", "ae", "ü", "ue", "ö", "oe", "ß", "ss")
 
 func normalizeMetricName(name string) (string, error) {
-	if validRegex.MatchString(name) {
+	if validMetricRegex.MatchString(name) {
 		return name, nil
 	}
 
 	normalized := latin1Replacer.Replace(name)
-	if validRegex.MatchString(normalized) {
+	if validMetricRegex.MatchString(normalized) {
 		return normalized, nil
 	}
-	normalized = replaceRegex.ReplaceAllLiteralString(normalized, "_")
-	if !validRegex.MatchString(normalized) {
+	normalized = replaceMetricRegex.ReplaceAllLiteralString(normalized, "_")
+	if !validMetricRegex.MatchString(normalized) {
 		return "", fmt.Errorf("the group address name \"%s\" don't matchs the following regex: [a-zA-Z_:][a-zA-Z0-9_:]*", name)
 	}
 	return normalized, nil
+}
+
+var dptRegex = regexp.MustCompilePOSIX("(DPT|DPST)-([0-9]{1,2})(-([0-9]{1,3}))?")
+
+func normalizeDPTs(dpt string) (string, error) {
+	if !dptRegex.MatchString(dpt) {
+		return "", fmt.Errorf("data type \"%s\" is not a valid knx type", dpt)
+	}
+	matches := dptRegex.FindStringSubmatch(dpt)
+
+	if len(matches) != 5 {
+		return "", fmt.Errorf("invalid match found")
+	}
+	if matches[4] == "" {
+		return fmt.Sprintf("%s.*", matches[2]), nil
+	}
+	return fmt.Sprintf("%s.%03s", matches[2], matches[4]), nil
+
 }
