@@ -1,6 +1,7 @@
 package knx
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -26,11 +27,14 @@ const Tunnel = ConnectionType("Tunnel")
 const Router = ConnectionType("Router")
 
 func (t ConnectionType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + t + "\""), nil
+	return json.Marshal(string(t))
 }
 
 func (t *ConnectionType) UnmarshalJSON(data []byte) error {
-	str := string(data)
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
 	switch strings.ToLower(str) {
 	case "tunnel":
 		*t = Tunnel
@@ -39,6 +43,25 @@ func (t *ConnectionType) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("invalid connection type given: \"%s\"", str)
 	}
+	return nil
+}
+
+type Duration time.Duration
+
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).String())
+}
+
+func (d *Duration) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+	duration, err := time.ParseDuration(str)
+	if err != nil {
+		return err
+	}
+	*d = Duration(duration)
 	return nil
 }
 
@@ -57,5 +80,5 @@ type GroupAddressConfig struct {
 	// ReadActive allows the exporter to actively send `GroupValueRead` telegrams to actively poll the value instead waiting for it.
 	ReadActive bool `json:",omitempty"`
 	// MaxAge of a value until it will actively send a `GroupValueRead` telegram to read the value if ReadActive is set to true.
-	MaxAge time.Duration `json:",omitempty"`
+	MaxAge Duration `json:",omitempty"`
 }

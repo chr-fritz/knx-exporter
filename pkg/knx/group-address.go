@@ -1,6 +1,9 @@
 package knx
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/vapourismo/knx-go/knx/cemi"
 )
 
@@ -26,7 +29,7 @@ func (g GroupAddress) String() string {
 }
 
 func (g GroupAddress) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + g.String() + "\""), nil
+	return json.Marshal(g.String())
 }
 
 func (g GroupAddress) MarshalText() ([]byte, error) {
@@ -35,6 +38,7 @@ func (g GroupAddress) MarshalText() ([]byte, error) {
 
 func (g *GroupAddress) UnmarshalJSON(data []byte) error {
 	str := string(data)
+	str = strings.Trim(str, "\"'")
 	ga, e := cemi.NewGroupAddrString(str)
 	if e != nil {
 		return e
