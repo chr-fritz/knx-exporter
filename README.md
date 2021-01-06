@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fchr-fritz%2Fknx-exporter.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fchr-fritz%2Fknx-exporter?ref=badge_small)
+
 # KNX Prometheus Exporter
 
 The KNX Prometheus Exporter is a small bridge to export values measured
@@ -8,11 +10,13 @@ sent `GroupValueWrite` telegrams and can request values itself using
 [TOC]: # "## Table of Contents"
 
 ## Table of Contents
-- [Usage](#usage)
-  - [Preparing the configuration](#preparing-the-configuration)
-- [Contributing](#contributing)
-- [License](#license)
-- [Maintainer](#maintainer)
+- [KNX Prometheus Exporter](#knx-prometheus-exporter)
+  - [Table of Contents](#table-of-contents)
+  - [Usage](#usage)
+    - [Preparing the configuration](#preparing-the-configuration)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Maintainer](#maintainer)
 
 
 ## Usage
