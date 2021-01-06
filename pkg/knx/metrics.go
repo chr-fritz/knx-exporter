@@ -21,9 +21,10 @@ type MetricsExporter struct {
 	config     *Config
 	client     GroupClient
 
-	metricsChan  chan metricSnapshot
-	snapshotLock sync.RWMutex
-	metrics      map[string]metricSnapshot
+	metricsChan    chan metricSnapshot
+	snapshotLock   sync.RWMutex
+	metrics        map[string]metricSnapshot
+	messageCounter *prometheus.CounterVec
 }
 
 type metricSnapshot struct {
@@ -39,6 +40,10 @@ func NewMetricsExporter(configFile string) (*MetricsExporter, error) {
 		snapshotLock: sync.RWMutex{},
 		metrics:      map[string]metricSnapshot{},
 		metricsChan:  make(chan metricSnapshot),
+		messageCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      "messages",
+			Namespace: "knx",
+		}, []string{"direction", "processed"}),
 	}
 	if err := m.readConfig(); err != nil {
 		return nil, err
@@ -109,7 +114,7 @@ func (e *MetricsExporter) storeSnapshots() {
 }
 
 func (e *MetricsExporter) RegisterMetrics() []prometheus.Collector {
-	var metrics []prometheus.Collector
+	metrics := []prometheus.Collector{e.messageCounter}
 	for ga, gaConfig := range e.config.AddressConfigs {
 		if !gaConfig.Export {
 			continue
@@ -154,6 +159,7 @@ func (e *MetricsExporter) getMetricsValue(metric string) func() float64 {
 }
 
 func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
+	e.messageCounter.WithLabelValues("received", "false").Inc()
 	destination := GroupAddress(event.Destination)
 	addr, ok := e.config.AddressConfigs[destination]
 	if !ok {
@@ -190,6 +196,7 @@ func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
 		timestamp:  time.Now(),
 		metricType: addr.MetricType,
 	}
+	e.messageCounter.WithLabelValues("received", "true").Inc()
 }
 
 func extractAsFloat64(value dpt.DatapointValue) (float64, error) {
