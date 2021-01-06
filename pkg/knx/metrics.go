@@ -58,6 +58,7 @@ func (e *MetricsExporter) Run() error {
 	}
 
 	go e.storeSnapshots()
+	logrus.Info("Waiting for incoming knx telegrams...")
 	for msg := range e.client.Inbound() {
 		e.handleEvent(msg)
 	}
@@ -87,6 +88,7 @@ func (e *MetricsExporter) readConfig() error {
 func (e *MetricsExporter) createClient() error {
 	switch e.config.Connection.Type {
 	case Tunnel:
+		logrus.Infof("Connect to %s using tunneling", e.config.Connection.Endpoint)
 		tunnel, err := knx.NewGroupTunnel(e.config.Connection.Endpoint, knx.DefaultTunnelConfig)
 		if err != nil {
 			return err
@@ -94,6 +96,7 @@ func (e *MetricsExporter) createClient() error {
 		e.client = &tunnel
 		return nil
 	case Router:
+		logrus.Infof("Connect to %s using multicast routing", e.config.Connection.Endpoint)
 		router, err := knx.NewGroupRouter(e.config.Connection.Endpoint, knx.DefaultRouterConfig)
 		if err != nil {
 			return err
@@ -140,6 +143,7 @@ func (e *MetricsExporter) RegisterMetrics() []prometheus.Collector {
 		}
 
 		if metric != nil {
+			logrus.Debugf("Export KNX metric \"%s\" for group address %s.", name, ga)
 			metrics = append(metrics, metric)
 		}
 	}
@@ -170,14 +174,16 @@ func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
 		return
 	}
 
-	value, found := dpt.Produce(addr.DPT)
+	v, found := dpt.Produce(addr.DPT)
 	if !found {
-		logrus.Warnf("Can not find dpt description to unpack %s telegram from %s for %s.",
+		logrus.Warnf("Can not find dpt description for \"%s\" to unpack %s telegram from %s for %s.",
+			addr.DPT,
 			event.Command.String(),
 			event.Source.String(),
 			event.Destination.String())
 		return
 	}
+	value := v.(DPT)
 
 	if err := value.Unpack(event.Data); err != nil {
 		logrus.Warn("Can not unpack data: ", err)
@@ -189,9 +195,10 @@ func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
 		logrus.Warn(err)
 		return
 	}
-
+	metricName := e.config.MetricsPrefix + addr.Name
+	logrus.Tracef("Processed value %s for %s on group address %s", value.String(), metricName, destination)
 	e.metricsChan <- metricSnapshot{
-		name:       e.config.MetricsPrefix + addr.Name,
+		name:       metricName,
 		value:      floatValue,
 		timestamp:  time.Now(),
 		metricType: addr.MetricType,
