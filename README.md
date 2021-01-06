@@ -9,12 +9,36 @@ sent `GroupValueWrite` telegrams and can request values itself using
 
 ## Table of Contents
 - [Usage](#usage)
+  - [Preparing the configuration](#preparing-the-configuration)
 - [Contributing](#contributing)
 - [License](#license)
 - [Maintainer](#maintainer)
 
 
 ## Usage
+
+### Preparing the configuration
+
+The KNX Prometheus Exporter will only export the values from configured
+group addresses. A good starting point is to
+[export the group addresses](https://support.knx.org/hc/en-us/articles/115001825324-Group-Address-Export)
+from ETS 5 into the XML format and convert them.
+
+Please refer the KNX Documentation
+"[Group Address & Export](https://support.knx.org/hc/en-us/articles/115001825324-Group-Address-Export)"
+for more information about how to export the group addresses to XML.
+
+With the exported group addresses you can call the `knx-exporter` and
+convert them:
+
+```shell script
+knx-exporter convertGA [SOURCE] [TARGET]
+```
+
+You must replace `[SOURCE]` with the path to your group address export
+file. `[TARGET]` is the path where the converted configuration should be
+stored.
+
 
 ## Contributing
 
