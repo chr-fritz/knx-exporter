@@ -12,7 +12,7 @@ import (
 type exporter struct {
 	Port          uint16
 	health        healthcheck.Handler
-	meterRegistry *prometheus.Registry
+	meterRegistry prometheus.Registerer
 }
 
 type Exporter interface {
@@ -26,7 +26,7 @@ func NewExporter(port uint16) Exporter {
 	return &exporter{
 		Port:          port,
 		health:        healthcheck.NewHandler(),
-		meterRegistry: prometheus.NewRegistry(),
+		meterRegistry: prometheus.DefaultRegisterer,
 	}
 }
 
@@ -36,7 +36,7 @@ func (e exporter) Run() error {
 
 	server.HandleFunc("/live", e.health.LiveEndpoint)
 	server.HandleFunc("/ready", e.health.ReadyEndpoint)
-	handler := promhttp.InstrumentMetricHandler(e.meterRegistry, promhttp.HandlerFor(e.meterRegistry, promhttp.HandlerOpts{}))
+	handler := promhttp.Handler()
 	server.Handle("/metrics", handler)
 	return http.ListenAndServe(listenAddr, server)
 }
