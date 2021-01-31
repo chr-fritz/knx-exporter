@@ -31,7 +31,7 @@ func NewConvertGaCommand() *cobra.Command {
 
 	return &cobra.Command{
 		Use:   "convertGA [sourceFile] [targetFile]",
-		Short: "Converts the ETS5 XML group address export into the configuration format.",
+		Short: "Converts the ETS 5 XML group address export into the configuration format.",
 		Long: `Converts the ETS 5 XML group address export into the configuration format.
 
 It takes the XML group address export from the ETS 5 tool and converts it into the yaml format
