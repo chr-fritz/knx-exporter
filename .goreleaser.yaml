@@ -55,6 +55,23 @@ dockers:
       - "--label=org.opencontainers.image.licenses=Apache-2.0"
     extra_files:
       - pkg/.knx-exporter.yaml
+brews:
+  - tap:
+      owner: chr-fritz
+      name: homebrew-tap
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@chr-fritz.de
+    folder: Formula
+    homepage: "https://github.com/chr-fritz/knx-exporter"
+    description: "The KNX Prometheus Exporter is a small bridge to export values measured by KNX sensors to Prometheus."
+    license: "Apache-2.0"
+    test: |
+      system "#{bin}/knx-exporter --version"
+    install: |
+      bin.install "knx-exporter"
+      bash_completion.install "completions/knx-exporter.bash" => "knx-exporter"
+      zsh_completion.install "completions/knx-exporter.zsh" => "_knx-exporter"
 checksum:
   name_template: 'checksums.txt'
 snapshot:

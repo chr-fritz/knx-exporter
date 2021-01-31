@@ -7,19 +7,28 @@ The KNX Prometheus Exporter is a small bridge to export values measured by KNX s
 Prometheus. It takes the values either from cyclic sent `GroupValueWrite` telegrams and can request
 values itself using `GroupValueRead` telegrams.
 
-[TOC]: # "## Table of Contents"
 
-## Table of Contents
-- [Usage](#usage)
-  - [Converting the ETS 5 Group Export to a configuration](#converting-the-ets-5-group-export-to-a-configuration)
-  - [Preparing the configuration](#preparing-the-configuration)
-  - [Running the exporter](#running-the-exporter)
-- [Exported metrics](#exported-metrics)
-- [Health Check Endpoints](#health-check-endpoints)
-- [Contributing](#contributing)
-- [License](#license)
-- [Maintainer](#maintainer)
+## Installing
 
+### macOS
+
+Using brew tap:
+
+```shell script
+brew tap chr-fritz/tap
+brew install chr-fritz/tap/knx-exporter
+```
+
+### Docker
+
+```shell script
+docker pull quay.io/chrfritz/knx-exporter
+```
+
+### Other
+
+Download the [latest release](https://github.com/chr-fritz/knx-exporter/releases/latest) and place
+it in your `$PATH`.
 
 ## Usage
 
