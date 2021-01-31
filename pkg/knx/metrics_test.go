@@ -22,8 +22,9 @@ func Test_exporter_readConfig(t *testing.T) {
 		{"wrong filename", "fixtures/invalid.yaml", nil, true},
 		{"full config", "fixtures/full-config.yaml", &Config{
 			Connection: Connection{
-				Type:     Tunnel,
-				Endpoint: "192.168.1.15:3671",
+				Type:            Tunnel,
+				Endpoint:        "192.168.1.15:3671",
+				PhysicalAddress: PhysicalAddress(cemi.NewIndividualAddr3(2, 0, 1)),
 			},
 			MetricsPrefix: "knx_",
 			AddressConfigs: map[GroupAddress]GroupAddressConfig{
