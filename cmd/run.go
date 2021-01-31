@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/heptiolabs/healthcheck"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,9 +54,11 @@ func NewRunCommand() *cobra.Command {
 	return &cmd
 }
 
-func (i *RunOptions) run(cmd *cobra.Command, args []string) error {
+func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
 	exporter := metrics.NewExporter(i.port)
 	metricsExporter, err := knx.NewMetricsExporter(i.configFile)
+	exporter.AddLivenessCheck("knxConnection", metricsExporter.IsAlive)
+	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
 
 	if err != nil {
 		return err

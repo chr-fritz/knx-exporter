@@ -55,6 +55,9 @@ func (p *poller) Stop() {
 }
 
 func (p *poller) pollAddresses(t time.Time) {
+	if p.exporter.IsAlive() != nil {
+		return
+	}
 	for address, config := range p.metricsToPoll {
 		snapshot := p.exporter.getMetricSnapshot(config.Name)
 		if snapshot == nil {

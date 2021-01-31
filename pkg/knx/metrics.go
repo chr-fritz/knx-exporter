@@ -25,6 +25,7 @@ type MetricsExporter struct {
 	snapshotLock   sync.RWMutex
 	metrics        map[string]metricSnapshot
 	messageCounter *prometheus.CounterVec
+	health         error
 }
 
 type metricSnapshot struct {
@@ -54,6 +55,7 @@ func NewMetricsExporter(configFile string) (*MetricsExporter, error) {
 
 func (e *MetricsExporter) Run() error {
 	if err := e.createClient(); err != nil {
+		e.health = err
 		return err
 	}
 
@@ -69,6 +71,10 @@ func (e *MetricsExporter) Run() error {
 func (e *MetricsExporter) Close() {
 	e.client.Close()
 	close(e.metricsChan)
+}
+
+func (e *MetricsExporter) IsAlive() error {
+	return e.health
 }
 
 func (e *MetricsExporter) readConfig() error {

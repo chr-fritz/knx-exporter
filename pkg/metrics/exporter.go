@@ -20,6 +20,8 @@ type Exporter interface {
 	MustRegister(collectors ...prometheus.Collector)
 	Register(collector prometheus.Collector) error
 	Unregister(collector prometheus.Collector) bool
+	AddLivenessCheck(name string, check healthcheck.Check)
+	AddReadinessCheck(name string, check healthcheck.Check)
 }
 
 func NewExporter(port uint16) Exporter {
@@ -48,4 +50,10 @@ func (e exporter) Register(collector prometheus.Collector) error {
 }
 func (e exporter) Unregister(collector prometheus.Collector) bool {
 	return e.meterRegistry.Unregister(collector)
+}
+func (e exporter) AddLivenessCheck(name string, check healthcheck.Check) {
+	e.health.AddLivenessCheck(name, check)
+}
+func (e exporter) AddReadinessCheck(name string, check healthcheck.Check) {
+	e.health.AddReadinessCheck(name, check)
 }
