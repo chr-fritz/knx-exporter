@@ -1,5 +1,7 @@
 package knx
 
+//go:generate mockgen -destination=fake/adapterMocks.go -package=fake -source=adapter.go
+
 import "github.com/vapourismo/knx-go/knx"
 
 // GroupClient is a super interface for the knx.GroupClient interface to also export the Close() function.
