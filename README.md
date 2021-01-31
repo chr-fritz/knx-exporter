@@ -1,6 +1,7 @@
 # KNX Prometheus Exporter
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fchr-fritz%2Fknx-exporter.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fchr-fritz%2Fknx-exporter?ref=badge_small)
+![Go build](https://github.com/chr-fritz/knx-exporter/workflows/Go%20build/badge.svg)
 
 The KNX Prometheus Exporter is a small bridge to export values measured by KNX sensors to
 Prometheus. It takes the values either from cyclic sent `GroupValueWrite` telegrams and can request
