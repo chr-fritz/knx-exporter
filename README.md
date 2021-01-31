@@ -14,6 +14,8 @@ values itself using `GroupValueRead` telegrams.
   - [Converting the ETS 5 Group Export to a configuration](#converting-the-ets-5-group-export-to-a-configuration)
   - [Preparing the configuration](#preparing-the-configuration)
   - [Running the exporter](#running-the-exporter)
+- [Exported metrics](#exported-metrics)
+- [Health Check Endpoints](#health-check-endpoints)
 - [Contributing](#contributing)
 - [License](#license)
 - [Maintainer](#maintainer)
@@ -139,6 +141,26 @@ knx-exporter run -f [CONFIG-FIlE]
 You must replace `[CONFIG-FILE]` with the path to your configuration file that you prepared in the
 previous step. After starting the exporter you can open
 [`http://localhost:8080/metrics`](http://localhost:8080/metrics) to view the exported metrics.
+
+## Exported metrics
+
+Beside exported metrics from KNX group addresses it exports some additional metrics. This metrics
+can be grouped into three groups:
+
+1. **KNX Message Metrics:** Three counter metrics which counts the number of
+   - received messages `knx_messages{direction="received",processed="false"}`
+   - processed received messages `knx_messages{direction="received",processed="true"}` and
+   - sent messages `knx_messages{direction="sent",processed="true"}`.
+2. **HTTP Metrics:** Counts the processed number of successfully and failed http requests. All
+   metrics starts with `promhttp_`.
+3. **GoLang Metrics:** These are metrics which indicates some health information about memory, cpu
+   usage, threads and other GoLang internal information.
+
+## Health Check Endpoints
+
+The KNX Prometheus Exporter provides endpoints for liveness and readiness checks like they were
+recommended in enviroments like Kubernetes. They are reachable under `/live` and `/ready`. With
+`/live?full=1` and `/ready?full=1` they also print the status of every single check.
 
 ## Contributing
 
