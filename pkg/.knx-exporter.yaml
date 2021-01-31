@@ -1,0 +1,3 @@
+exporter:
+  port: 8080
+  configFile: /etc/knx-exporter/ga-config.yaml

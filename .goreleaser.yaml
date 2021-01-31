@@ -53,6 +53,8 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.url=https://github.com/chr-fritz/knx-exporter"
       - "--label=org.opencontainers.image.licenses=Apache-2.0"
+    extra_files:
+      - pkg/.knx-exporter.yaml
 checksum:
   name_template: 'checksums.txt'
 snapshot:
