@@ -57,7 +57,19 @@ func (p *poller) Stop() {
 func (p *poller) pollAddresses(t time.Time) {
 	for address, config := range p.metricsToPoll {
 		snapshot := p.exporter.getMetricSnapshot(config.Name)
-		if snapshot == nil || t.Sub(snapshot.timestamp).Truncate(time.Second) >= time.Duration(config.MaxAge) {
+		if snapshot == nil {
+			logrus.Tracef("Initial poll of %s", address.String())
+			p.sendReadMessage(address)
+			continue
+		}
+
+		diff := t.Sub(snapshot.timestamp).Round(time.Second)
+		maxAge := time.Duration(config.MaxAge)
+		if diff >= maxAge {
+			logrus.Tracef("Poll %s for new value as it is already %s old but max age is %s only",
+				address.String(),
+				diff.String(),
+				maxAge.String())
 			p.sendReadMessage(address)
 		}
 	}
@@ -73,6 +85,7 @@ func (p *poller) sendReadMessage(address GroupAddress) {
 	if e := p.exporter.client.Send(event); e != nil {
 		logrus.Infof("can not send read request for %s: %s", address.String(), e)
 	}
+	p.exporter.messageCounter.WithLabelValues("sent", "true").Inc()
 }
 
 func getMetricsToPoll(config *Config) GroupAddressConfigSet {
