@@ -195,7 +195,7 @@ func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
 		logrus.Warn(err)
 		return
 	}
-	metricName := e.config.MetricsPrefix + addr.Name
+	metricName := e.config.NameFor(addr)
 	logrus.Tracef("Processed value %s for %s on group address %s", value.String(), metricName, destination)
 	e.metricsChan <- metricSnapshot{
 		name:       metricName,

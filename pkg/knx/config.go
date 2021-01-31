@@ -13,7 +13,21 @@ type Config struct {
 	Connection Connection `json:",omitempty"`
 	// MetricsPrefix is a short prefix which will be added in front of the actual metric name.
 	MetricsPrefix  string
-	AddressConfigs map[GroupAddress]GroupAddressConfig
+	AddressConfigs GroupAddressConfigSet
+}
+
+// NameForGa returns the full metric name for the given GroupAddress.
+func (c *Config) NameForGa(address GroupAddress) string {
+	gaConfig, ok := c.AddressConfigs[address]
+	if !ok {
+		return ""
+	}
+	return c.NameFor(gaConfig)
+}
+
+// NameFor return s the full metric name for the given GroupAddressConfig.
+func (c *Config) NameFor(gaConfig GroupAddressConfig) string {
+	return c.MetricsPrefix + gaConfig.Name
 }
 
 // Connection contains the information about how to connect to the KNX system and how to identify itself.
@@ -87,3 +101,6 @@ type GroupAddressConfig struct {
 	// MaxAge of a value until it will actively send a `GroupValueRead` telegram to read the value if ReadActive is set to true.
 	MaxAge Duration `json:",omitempty"`
 }
+
+// GroupAddressConfigSet is a shortcut type for the group address config map.
+type GroupAddressConfigSet map[GroupAddress]GroupAddressConfig
