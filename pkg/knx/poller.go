@@ -36,6 +36,9 @@ func NewPoller(exporter *MetricsExporter) Poller {
 }
 
 func (p *poller) Run() {
+	if p.pollingInterval <= 0 {
+		return
+	}
 	p.ticker = time.NewTicker(p.pollingInterval)
 	c := p.ticker.C
 	go func() {
@@ -46,7 +49,9 @@ func (p *poller) Run() {
 }
 
 func (p *poller) Stop() {
-	p.ticker.Stop()
+	if p.ticker != nil {
+		p.ticker.Stop()
+	}
 }
 
 func (p *poller) pollAddresses(t time.Time) {
