@@ -16,9 +16,14 @@ type Config struct {
 	AddressConfigs map[GroupAddress]GroupAddressConfig
 }
 
+// Connection contains the information about how to connect to the KNX system and how to identify itself.
 type Connection struct {
-	Type     ConnectionType
+	// Type of the actual connection. Can be either Tunnel or Router
+	Type ConnectionType
+	// Endpoint defines the IP address or hostname and port to where it should connect.
 	Endpoint string
+	// PhysicalAddress defines how the knx-exporter should identify itself within the KNX system.
+	PhysicalAddress PhysicalAddress
 }
 
 type ConnectionType string

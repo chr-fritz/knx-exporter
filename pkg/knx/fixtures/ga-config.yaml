@@ -1,6 +1,7 @@
 Connection:
   Endpoint: ""
   Type: ""
+  PhysicalAddress: 0.0.0
 MetricsPrefix: knx_
 AddressConfigs:
   0/0/1:
