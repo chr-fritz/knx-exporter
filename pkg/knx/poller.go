@@ -79,7 +79,7 @@ func getMetricsToPoll(config *Config) GroupAddressConfigSet {
 	toPoll := make(GroupAddressConfigSet)
 	for address, addressConfig := range config.AddressConfigs {
 		interval := time.Duration(addressConfig.MaxAge).Truncate(time.Second)
-		if !addressConfig.ReadActive || interval < time.Second {
+		if !addressConfig.Export || !addressConfig.ReadActive || interval < time.Second {
 			continue
 		}
 

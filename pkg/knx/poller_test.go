@@ -22,19 +22,20 @@ func Test_getMetricsToPoll(t *testing.T) {
 		{"empty", &Config{AddressConfigs: GroupAddressConfigSet{}}, GroupAddressConfigSet{}},
 		{"single-no-active-read", &Config{AddressConfigs: GroupAddressConfigSet{0: GroupAddressConfig{ReadActive: false}}}, GroupAddressConfigSet{}},
 		{"single-too-small-interval", &Config{AddressConfigs: GroupAddressConfigSet{0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(10 * time.Millisecond)}}}, GroupAddressConfigSet{}},
+		{"single-no-export", &Config{AddressConfigs: GroupAddressConfigSet{0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(10 * time.Second), Export: false}}}, GroupAddressConfigSet{}},
 		{"single-small-interval", &Config{
-			AddressConfigs: GroupAddressConfigSet{0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(1 * time.Second), Name: "a"}},
+			AddressConfigs: GroupAddressConfigSet{0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(1 * time.Second), Name: "a", Export: true}},
 			MetricsPrefix:  "knx_",
 		}, GroupAddressConfigSet{0: GroupAddressConfig{Name: "knx_a", ReadActive: true, MaxAge: Duration(5 * time.Second)}}},
 		{"single", &Config{
-			AddressConfigs: GroupAddressConfigSet{0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(10 * time.Second), Name: "a"}},
+			AddressConfigs: GroupAddressConfigSet{0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(10 * time.Second), Name: "a", Export: true}},
 			MetricsPrefix:  "knx_",
 		}, GroupAddressConfigSet{0: GroupAddressConfig{Name: "knx_a", ReadActive: true, MaxAge: Duration(10 * time.Second)}}},
 		{"multiple", &Config{
 			AddressConfigs: GroupAddressConfigSet{
-				0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(10 * time.Second), Name: "a"},
-				1: GroupAddressConfig{ReadActive: true, MaxAge: Duration(15 * time.Second), Name: "b"},
-				2: GroupAddressConfig{ReadActive: true, MaxAge: Duration(45 * time.Second), Name: "c"},
+				0: GroupAddressConfig{ReadActive: true, MaxAge: Duration(10 * time.Second), Name: "a", Export: true},
+				1: GroupAddressConfig{ReadActive: true, MaxAge: Duration(15 * time.Second), Name: "b", Export: true},
+				2: GroupAddressConfig{ReadActive: true, MaxAge: Duration(45 * time.Second), Name: "c", Export: true},
 			},
 			MetricsPrefix: "knx_",
 		}, GroupAddressConfigSet{
