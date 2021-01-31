@@ -74,7 +74,7 @@ func (e *MetricsExporter) Close() {
 func (e *MetricsExporter) readConfig() error {
 	content, err := ioutil.ReadFile(e.configFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("can not read group address configuration: %s", err)
 	}
 	config := Config{}
 	err = yaml.Unmarshal(content, &config)
