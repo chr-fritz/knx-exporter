@@ -162,6 +162,17 @@ func (e *MetricsExporter) getMetricsValue(metric string) func() float64 {
 	}
 }
 
+// getMetricSnapshot retrieves the latest metric snapshot for the metric with the given name.
+func (e *MetricsExporter) getMetricSnapshot(metric string) *metricSnapshot {
+	e.snapshotLock.RLock()
+	defer e.snapshotLock.RUnlock()
+	snapshot, ok := e.metrics[metric]
+	if !ok {
+		return nil
+	}
+	return &snapshot
+}
+
 func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
 	e.messageCounter.WithLabelValues("received", "false").Inc()
 	destination := GroupAddress(event.Destination)

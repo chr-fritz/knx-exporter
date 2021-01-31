@@ -63,13 +63,19 @@ func (i *RunOptions) run(cmd *cobra.Command, args []string) error {
 
 	collectors := metricsExporter.RegisterMetrics()
 	exporter.MustRegister(collectors...)
+	poller := knx.NewPoller(metricsExporter)
 
 	go func() {
 		if err := metricsExporter.Run(); err != nil {
 			logrus.Warn(err)
 		}
 	}()
-	defer metricsExporter.Close()
+	poller.Run()
+
+	defer func() {
+		poller.Stop()
+		metricsExporter.Close()
+	}()
 	return exporter.Run()
 }
 
