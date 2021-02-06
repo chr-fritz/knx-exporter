@@ -2,14 +2,12 @@ package knx
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/vapourismo/knx-go/knx"
@@ -17,7 +15,6 @@ import (
 )
 
 type MetricsExporter struct {
-	configFile string
 	config     *Config
 	client     GroupClient
 
@@ -36,8 +33,12 @@ type metricSnapshot struct {
 }
 
 func NewMetricsExporter(configFile string) (*MetricsExporter, error) {
+	config, err := ReadConfig(configFile)
+	if err != nil {
+		return nil, err
+	}
 	m := &MetricsExporter{
-		configFile:   configFile,
+		config:       config,
 		snapshotLock: sync.RWMutex{},
 		metrics:      map[string]metricSnapshot{},
 		metricsChan:  make(chan metricSnapshot),
@@ -45,9 +46,6 @@ func NewMetricsExporter(configFile string) (*MetricsExporter, error) {
 			Name:      "messages",
 			Namespace: "knx",
 		}, []string{"direction", "processed"}),
-	}
-	if err := m.readConfig(); err != nil {
-		return nil, err
 	}
 
 	return m, nil
@@ -75,20 +73,6 @@ func (e *MetricsExporter) Close() {
 
 func (e *MetricsExporter) IsAlive() error {
 	return e.health
-}
-
-func (e *MetricsExporter) readConfig() error {
-	content, err := ioutil.ReadFile(e.configFile)
-	if err != nil {
-		return fmt.Errorf("can not read group address configuration: %s", err)
-	}
-	config := Config{}
-	err = yaml.Unmarshal(content, &config)
-	if err != nil {
-		return fmt.Errorf("can not read config file %s: %s", e.configFile, err)
-	}
-	e.config = &config
-	return nil
 }
 
 func (e *MetricsExporter) createClient() error {

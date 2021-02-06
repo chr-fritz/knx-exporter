@@ -3,8 +3,11 @@ package knx
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
+
+	"github.com/ghodss/yaml"
 )
 
 // Config defines the structure of the configuration file which defines which
@@ -14,6 +17,20 @@ type Config struct {
 	// MetricsPrefix is a short prefix which will be added in front of the actual metric name.
 	MetricsPrefix  string
 	AddressConfigs GroupAddressConfigSet
+}
+
+// ReadConfig reads the given configuration file and returns the parsed Config object.
+func ReadConfig(configFile string) (*Config, error) {
+	content, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, fmt.Errorf("can not read group address configuration: %s", err)
+	}
+	config := Config{}
+	err = yaml.Unmarshal(content, &config)
+	if err != nil {
+		return nil, fmt.Errorf("can not read config file %s: %s", configFile, err)
+	}
+	return &config, nil
 }
 
 // NameForGa returns the full metric name for the given GroupAddress.
