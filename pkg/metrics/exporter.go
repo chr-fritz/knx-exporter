@@ -1,5 +1,7 @@
 package metrics
 
+//go:generate mockgen -destination=fake/exporterMocks.go -package=fake -source=exporter.go
+
 import (
 	"fmt"
 	"net/http"
