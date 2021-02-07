@@ -10,6 +10,7 @@ import (
 	"github.com/vapourismo/knx-go/knx/cemi"
 
 	"github.com/chr-fritz/knx-exporter/pkg/knx/fake"
+	metricsFake "github.com/chr-fritz/knx-exporter/pkg/metrics/fake"
 )
 
 func Test_getMetricsToPoll(t *testing.T) {
@@ -80,21 +81,23 @@ func Test_calcPollingInterval(t *testing.T) {
 func TestPoller(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
-	exporter, err := NewMetricsExporter("fixtures/readConfig.yaml")
+	mockExporter := metricsFake.NewMockExporter(ctrl)
+	mockExporter.EXPECT().Register(gomock.Any()).Times(3)
+	exporter, err := NewMetricsExporter("fixtures/readConfig.yaml", mockExporter)
 	assert.NoError(t, err)
 	groupClient := fake.NewMockGroupClient(ctrl)
 	exporter.client = groupClient
-	go exporter.storeSnapshots()
 
-	exporter.metricsChan <- metricSnapshot{
+	exporter.metrics.AddSnapshot(&Snapshot{
 		name:      "knx_dummy_metric",
 		timestamp: time.Now().Add(-14 * time.Second),
-	}
-	exporter.metricsChan <- metricSnapshot{
+		config:    &GroupAddressConfig{},
+	})
+	exporter.metrics.AddSnapshot(&Snapshot{
 		name:      "knx_dummy_metric1",
 		timestamp: time.Now().Add(2 * time.Second),
-	}
+		config:    &GroupAddressConfig{},
+	})
 
 	groupClient.EXPECT().Send(knx.GroupEvent{
 		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 1),

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,39 +13,30 @@ import (
 )
 
 type MetricsExporter struct {
-	config     *Config
-	client     GroupClient
+	config *Config
+	client GroupClient
 
-	metricsChan    chan metricSnapshot
-	snapshotLock   sync.RWMutex
-	metrics        map[string]metricSnapshot
+	metricsChan    chan *Snapshot
+	metrics        MetricSnapshotHandler
 	messageCounter *prometheus.CounterVec
 	health         error
 }
 
-type metricSnapshot struct {
-	name       string
-	value      float64
-	timestamp  time.Time
-	metricType string
-}
-
-func NewMetricsExporter(configFile string) (*MetricsExporter, error) {
+func NewMetricsExporter(configFile string, registerer prometheus.Registerer) (*MetricsExporter, error) {
 	config, err := ReadConfig(configFile)
 	if err != nil {
 		return nil, err
 	}
 	m := &MetricsExporter{
-		config:       config,
-		snapshotLock: sync.RWMutex{},
-		metrics:      map[string]metricSnapshot{},
-		metricsChan:  make(chan metricSnapshot),
+		config:      config,
+		metrics:     NewMetricsSnapshotHandler(registerer),
+		metricsChan: make(chan *Snapshot),
 		messageCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name:      "messages",
 			Namespace: "knx",
 		}, []string{"direction", "processed"}),
 	}
-
+	_ = registerer.Register(m.messageCounter)
 	return m, nil
 }
 
@@ -99,68 +88,9 @@ func (e *MetricsExporter) createClient() error {
 }
 
 func (e *MetricsExporter) storeSnapshots() {
-	for snapshot := range e.metricsChan {
-		e.snapshotLock.Lock()
-		e.metrics[snapshot.name] = snapshot
-		e.snapshotLock.Unlock()
+	for snap := range e.metricsChan {
+		e.metrics.AddSnapshot(snap)
 	}
-}
-
-func (e *MetricsExporter) RegisterMetrics() []prometheus.Collector {
-	metrics := []prometheus.Collector{e.messageCounter}
-	for ga, gaConfig := range e.config.AddressConfigs {
-		if !gaConfig.Export {
-			continue
-		}
-		name := e.config.MetricsPrefix + gaConfig.Name
-		var metric prometheus.Collector
-		if strings.ToLower(gaConfig.MetricType) == "counter" {
-			metric = prometheus.NewCounterFunc(
-				prometheus.CounterOpts{
-					Name: name,
-					Help: fmt.Sprintf("Value of %s\n%s", ga.String(), gaConfig.Comment),
-				},
-				e.getMetricsValue(name),
-			)
-		} else if strings.ToLower(gaConfig.MetricType) == "gauge" {
-			metric = prometheus.NewGaugeFunc(
-				prometheus.GaugeOpts{
-					Name: name,
-					Help: fmt.Sprintf("Value of %s\n%s", ga.String(), gaConfig.Comment),
-				},
-				e.getMetricsValue(name),
-			)
-		}
-
-		if metric != nil {
-			logrus.Debugf("Export KNX metric \"%s\" for group address %s.", name, ga)
-			metrics = append(metrics, metric)
-		}
-	}
-	return metrics
-}
-
-func (e *MetricsExporter) getMetricsValue(metric string) func() float64 {
-	return func() float64 {
-		e.snapshotLock.RLock()
-		defer e.snapshotLock.RUnlock()
-		snapshot, ok := e.metrics[metric]
-		if !ok {
-			return math.NaN()
-		}
-		return snapshot.value
-	}
-}
-
-// getMetricSnapshot retrieves the latest metric snapshot for the metric with the given name.
-func (e *MetricsExporter) getMetricSnapshot(metric string) *metricSnapshot {
-	e.snapshotLock.RLock()
-	defer e.snapshotLock.RUnlock()
-	snapshot, ok := e.metrics[metric]
-	if !ok {
-		return nil
-	}
-	return &snapshot
 }
 
 func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
@@ -198,11 +128,13 @@ func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
 	}
 	metricName := e.config.NameFor(addr)
 	logrus.Tracef("Processed value %s for %s on group address %s", value.String(), metricName, destination)
-	e.metricsChan <- metricSnapshot{
-		name:       metricName,
-		value:      floatValue,
-		timestamp:  time.Now(),
-		metricType: addr.MetricType,
+	e.metricsChan <- &Snapshot{
+		name:        metricName,
+		value:       floatValue,
+		source:      PhysicalAddress(event.Source),
+		timestamp:   time.Now(),
+		config:      &addr,
+		destination: destination,
 	}
 	e.messageCounter.WithLabelValues("received", "true").Inc()
 }

@@ -19,6 +19,7 @@ type Poller interface {
 
 type poller struct {
 	exporter        *MetricsExporter
+	snapshotHandler MetricSnapshotHandler
 	pollingInterval time.Duration
 	metricsToPoll   GroupAddressConfigSet
 	ticker          *time.Ticker
@@ -31,6 +32,7 @@ func NewPoller(exporter *MetricsExporter) Poller {
 	return &poller{
 		exporter:        exporter,
 		pollingInterval: interval,
+		snapshotHandler: exporter.metrics,
 		metricsToPoll:   metricsToPoll,
 	}
 }
@@ -39,6 +41,7 @@ func (p *poller) Run() {
 	if p.pollingInterval <= 0 {
 		return
 	}
+	logrus.Tracef("start polling. check every %s for addresses to poll.", p.pollingInterval)
 	p.ticker = time.NewTicker(p.pollingInterval)
 	c := p.ticker.C
 	go func() {
@@ -59,14 +62,14 @@ func (p *poller) pollAddresses(t time.Time) {
 		return
 	}
 	for address, config := range p.metricsToPoll {
-		snapshot := p.exporter.getMetricSnapshot(config.Name)
-		if snapshot == nil {
+		s := p.snapshotHandler.FindYoungestSnapshot(config.Name)
+		if s == nil {
 			logrus.Tracef("Initial poll of %s", address.String())
 			p.sendReadMessage(address)
 			continue
 		}
 
-		diff := t.Sub(snapshot.timestamp).Round(time.Second)
+		diff := t.Sub(s.timestamp).Round(time.Second)
 		maxAge := time.Duration(config.MaxAge)
 		if diff >= maxAge {
 			logrus.Tracef("Poll %s for new value as it is already %s old but max age is %s only",

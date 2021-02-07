@@ -56,7 +56,7 @@ func NewRunCommand() *cobra.Command {
 
 func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
 	exporter := metrics.NewExporter(i.port)
-	metricsExporter, err := knx.NewMetricsExporter(i.configFile)
+	metricsExporter, err := knx.NewMetricsExporter(i.configFile, exporter)
 	exporter.AddLivenessCheck("knxConnection", metricsExporter.IsAlive)
 	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
 
@@ -64,13 +64,11 @@ func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	collectors := metricsExporter.RegisterMetrics()
-	exporter.MustRegister(collectors...)
 	poller := knx.NewPoller(metricsExporter)
 
 	go func() {
-		if err := metricsExporter.Run(); err != nil {
-			logrus.Warn(err)
+		if e := metricsExporter.Run(); e != nil {
+			logrus.Warn(e)
 		}
 	}()
 	poller.Run()
