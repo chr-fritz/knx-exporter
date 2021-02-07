@@ -2,14 +2,10 @@ package knx
 
 import (
 	"fmt"
-	"math"
-	"reflect"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/vapourismo/knx-go/knx"
-	"github.com/vapourismo/knx-go/knx/dpt"
 )
 
 type MetricsExporter struct {
@@ -18,6 +14,7 @@ type MetricsExporter struct {
 
 	metricsChan    chan *Snapshot
 	metrics        MetricSnapshotHandler
+	listener       Listener
 	messageCounter *prometheus.CounterVec
 	health         error
 }
@@ -47,11 +44,9 @@ func (e *MetricsExporter) Run() error {
 	}
 
 	go e.storeSnapshots()
-	logrus.Info("Waiting for incoming knx telegrams...")
-	for msg := range e.client.Inbound() {
-		e.handleEvent(msg)
-	}
 
+	e.listener = NewListener(e.config, e.client.Inbound(), e.metrics.GetMetricsChannel(), e.messageCounter)
+	go e.listener.Run()
 	return nil
 }
 
@@ -90,71 +85,5 @@ func (e *MetricsExporter) createClient() error {
 func (e *MetricsExporter) storeSnapshots() {
 	for snap := range e.metricsChan {
 		e.metrics.AddSnapshot(snap)
-	}
-}
-
-func (e *MetricsExporter) handleEvent(event knx.GroupEvent) {
-	e.messageCounter.WithLabelValues("received", "false").Inc()
-	destination := GroupAddress(event.Destination)
-	addr, ok := e.config.AddressConfigs[destination]
-	if !ok {
-		logrus.Tracef("Got ignored %s telegram from %s for %s.",
-			event.Command.String(),
-			event.Source.String(),
-			event.Destination.String())
-		return
-	}
-
-	v, found := dpt.Produce(addr.DPT)
-	if !found {
-		logrus.Warnf("Can not find dpt description for \"%s\" to unpack %s telegram from %s for %s.",
-			addr.DPT,
-			event.Command.String(),
-			event.Source.String(),
-			event.Destination.String())
-		return
-	}
-	value := v.(DPT)
-
-	if err := value.Unpack(event.Data); err != nil {
-		logrus.Warn("Can not unpack data: ", err)
-		return
-	}
-
-	floatValue, err := extractAsFloat64(value)
-	if err != nil {
-		logrus.Warn(err)
-		return
-	}
-	metricName := e.config.NameFor(addr)
-	logrus.Tracef("Processed value %s for %s on group address %s", value.String(), metricName, destination)
-	e.metricsChan <- &Snapshot{
-		name:        metricName,
-		value:       floatValue,
-		source:      PhysicalAddress(event.Source),
-		timestamp:   time.Now(),
-		config:      &addr,
-		destination: destination,
-	}
-	e.messageCounter.WithLabelValues("received", "true").Inc()
-}
-
-func extractAsFloat64(value dpt.DatapointValue) (float64, error) {
-	typedValue := reflect.ValueOf(value).Elem()
-	kind := typedValue.Kind()
-	if kind == reflect.Bool {
-		if typedValue.Bool() {
-			return 1, nil
-		} else {
-			return 0, nil
-		}
-	} else if kind >= reflect.Int && kind <= reflect.Int64 {
-		return float64(typedValue.Int()), nil
-	} else if kind >= reflect.Uint && kind <= reflect.Uint64 {
-		return float64(typedValue.Uint()), nil
-	} else if kind >= reflect.Float32 && kind <= reflect.Float64 {
-		return typedValue.Float(), nil
-	} else {
-		return math.NaN(), fmt.Errorf("can not find appropriate type for %s", typedValue.Type().Name())
 	}
 }
