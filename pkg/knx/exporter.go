@@ -15,6 +15,7 @@ type MetricsExporter struct {
 	metrics        MetricSnapshotHandler
 	listener       Listener
 	messageCounter *prometheus.CounterVec
+	poller         Poller
 	health         error
 }
 
@@ -41,6 +42,9 @@ func (e *MetricsExporter) Run() error {
 		return err
 	}
 
+	e.poller = NewPoller(e.config, e.client, e.metrics, e.messageCounter)
+	go e.poller.Run()
+
 	go e.metrics.Run()
 
 	e.listener = NewListener(e.config, e.client.Inbound(), e.metrics.GetMetricsChannel(), e.messageCounter)
@@ -49,6 +53,7 @@ func (e *MetricsExporter) Run() error {
 }
 
 func (e *MetricsExporter) Close() {
+	e.poller.Close()
 	e.client.Close()
 	e.metrics.Close()
 }

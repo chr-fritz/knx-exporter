@@ -5,12 +5,10 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/cemi"
-
-	"github.com/chr-fritz/knx-exporter/pkg/knx/fake"
-	metricsFake "github.com/chr-fritz/knx-exporter/pkg/metrics/fake"
 )
 
 func Test_getMetricsToPoll(t *testing.T) {
@@ -81,23 +79,32 @@ func Test_calcPollingInterval(t *testing.T) {
 func TestPoller(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockExporter := metricsFake.NewMockExporter(ctrl)
-	mockExporter.EXPECT().Register(gomock.Any()).Times(3)
-	exporter, err := NewMetricsExporter("fixtures/readConfig.yaml", mockExporter)
-	assert.NoError(t, err)
-	groupClient := fake.NewMockGroupClient(ctrl)
-	exporter.client = groupClient
 
-	exporter.metrics.AddSnapshot(&Snapshot{
-		name:      "knx_dummy_metric",
-		timestamp: time.Now().Add(-14 * time.Second),
-		config:    &GroupAddressConfig{},
-	})
-	exporter.metrics.AddSnapshot(&Snapshot{
-		name:      "knx_dummy_metric1",
-		timestamp: time.Now().Add(2 * time.Second),
-		config:    &GroupAddressConfig{},
-	})
+	groupClient := NewMockGroupClient(ctrl)
+	mockSnapshotHandler := NewMockMetricSnapshotHandler(ctrl)
+	messageCounter := prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{"direction", "processed"})
+
+	config, err := ReadConfig("fixtures/readConfig.yaml")
+
+	assert.NoError(t, err)
+
+	mockSnapshotHandler.EXPECT().
+		FindYoungestSnapshot("knx_dummy_metric").
+		Return(&Snapshot{
+			name:      "knx_dummy_metric",
+			timestamp: time.Now().Add(-14 * time.Second),
+			config:    &GroupAddressConfig{},
+		})
+	mockSnapshotHandler.EXPECT().
+		FindYoungestSnapshot("knx_dummy_metric1").
+		Return(&Snapshot{
+			name:      "knx_dummy_metric1",
+			timestamp: time.Now().Add(2 * time.Second),
+			config:    &GroupAddressConfig{},
+		})
+	mockSnapshotHandler.EXPECT().
+		FindYoungestSnapshot("knx_dummy_metric2").
+		Return(nil)
 
 	groupClient.EXPECT().Send(knx.GroupEvent{
 		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 1),
@@ -106,10 +113,9 @@ func TestPoller(t *testing.T) {
 		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 3),
 	}).Times(1)
 
-	p := NewPoller(exporter)
+	p := NewPoller(config, groupClient, mockSnapshotHandler, messageCounter)
 	p.Run()
 	time.Sleep(5500 * time.Millisecond)
 
-	p.Stop()
-	close(exporter.metricsChan)
+	p.Close()
 }

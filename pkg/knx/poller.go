@@ -4,6 +4,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/cemi"
@@ -13,12 +14,14 @@ import (
 type Poller interface {
 	// Run starts the polling.
 	Run()
-	// Stop stops the polling.
-	Stop()
+	// Close stops the polling.
+	Close()
 }
 
 type poller struct {
-	exporter        *MetricsExporter
+	client          GroupClient
+	config          *Config
+	messageCounter  *prometheus.CounterVec
 	snapshotHandler MetricSnapshotHandler
 	pollingInterval time.Duration
 	metricsToPoll   GroupAddressConfigSet
@@ -26,13 +29,15 @@ type poller struct {
 }
 
 // NewPoller creates a new Poller instance using the given MetricsExporter for connection handling and metrics observing.
-func NewPoller(exporter *MetricsExporter) Poller {
-	metricsToPoll := getMetricsToPoll(exporter.config)
+func NewPoller(config *Config, client GroupClient, metricsHandler MetricSnapshotHandler, messageCounter *prometheus.CounterVec) Poller {
+	metricsToPoll := getMetricsToPoll(config)
 	interval := calcPollingInterval(metricsToPoll)
 	return &poller{
-		exporter:        exporter,
+		client:          client,
+		config:          config,
+		messageCounter:  messageCounter,
 		pollingInterval: interval,
-		snapshotHandler: exporter.metrics,
+		snapshotHandler: metricsHandler,
 		metricsToPoll:   metricsToPoll,
 	}
 }
@@ -51,16 +56,13 @@ func (p *poller) Run() {
 	}()
 }
 
-func (p *poller) Stop() {
+func (p *poller) Close() {
 	if p.ticker != nil {
 		p.ticker.Stop()
 	}
 }
 
 func (p *poller) pollAddresses(t time.Time) {
-	if p.exporter.IsAlive() != nil {
-		return
-	}
 	for address, config := range p.metricsToPoll {
 		s := p.snapshotHandler.FindYoungestSnapshot(config.Name)
 		if s == nil {
@@ -85,13 +87,13 @@ func (p *poller) sendReadMessage(address GroupAddress) {
 	event := knx.GroupEvent{
 		Command:     knx.GroupRead,
 		Destination: cemi.GroupAddr(address),
-		Source:      cemi.IndividualAddr(p.exporter.config.Connection.PhysicalAddress),
+		Source:      cemi.IndividualAddr(p.config.Connection.PhysicalAddress),
 	}
 
-	if e := p.exporter.client.Send(event); e != nil {
+	if e := p.client.Send(event); e != nil {
 		logrus.Infof("can not send read request for %s: %s", address.String(), e)
 	}
-	p.exporter.messageCounter.WithLabelValues("sent", "true").Inc()
+	p.messageCounter.WithLabelValues("sent", "true").Inc()
 }
 
 func getMetricsToPoll(config *Config) GroupAddressConfigSet {

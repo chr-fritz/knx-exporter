@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"github.com/heptiolabs/healthcheck"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -57,26 +56,18 @@ func NewRunCommand() *cobra.Command {
 func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
 	exporter := metrics.NewExporter(i.port)
 	metricsExporter, err := knx.NewMetricsExporter(i.configFile, exporter)
-	exporter.AddLivenessCheck("knxConnection", metricsExporter.IsAlive)
-	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
-
 	if err != nil {
 		return err
 	}
+	defer metricsExporter.Close()
 
-	poller := knx.NewPoller(metricsExporter)
+	exporter.AddLivenessCheck("knxConnection", metricsExporter.IsAlive)
+	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
 
-	go func() {
-		if e := metricsExporter.Run(); e != nil {
-			logrus.Warn(e)
-		}
-	}()
-	poller.Run()
+	if e := metricsExporter.Run(); e != nil {
+		return e
+	}
 
-	defer func() {
-		poller.Stop()
-		metricsExporter.Close()
-	}()
 	return exporter.Run()
 }
 
