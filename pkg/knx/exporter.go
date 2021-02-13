@@ -12,7 +12,6 @@ type MetricsExporter struct {
 	config *Config
 	client GroupClient
 
-	metricsChan    chan *Snapshot
 	metrics        MetricSnapshotHandler
 	listener       Listener
 	messageCounter *prometheus.CounterVec
@@ -25,9 +24,8 @@ func NewMetricsExporter(configFile string, registerer prometheus.Registerer) (*M
 		return nil, err
 	}
 	m := &MetricsExporter{
-		config:      config,
-		metrics:     NewMetricsSnapshotHandler(registerer),
-		metricsChan: make(chan *Snapshot),
+		config:  config,
+		metrics: NewMetricsSnapshotHandler(registerer),
 		messageCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name:      "messages",
 			Namespace: "knx",
@@ -43,7 +41,7 @@ func (e *MetricsExporter) Run() error {
 		return err
 	}
 
-	go e.storeSnapshots()
+	go e.metrics.Run()
 
 	e.listener = NewListener(e.config, e.client.Inbound(), e.metrics.GetMetricsChannel(), e.messageCounter)
 	go e.listener.Run()
@@ -52,7 +50,7 @@ func (e *MetricsExporter) Run() error {
 
 func (e *MetricsExporter) Close() {
 	e.client.Close()
-	close(e.metricsChan)
+	e.metrics.Close()
 }
 
 func (e *MetricsExporter) IsAlive() error {
@@ -79,11 +77,5 @@ func (e *MetricsExporter) createClient() error {
 		return nil
 	default:
 		return fmt.Errorf("invalid connection type. must be either Tunnel or Router")
-	}
-}
-
-func (e *MetricsExporter) storeSnapshots() {
-	for snap := range e.metricsChan {
-		e.metrics.AddSnapshot(snap)
 	}
 }

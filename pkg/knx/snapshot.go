@@ -25,6 +25,12 @@ type MetricSnapshotHandler interface {
 	FindYoungestSnapshot(name string) *Snapshot
 	// GetValueFunc returns a function that returns the current value for the given snapshot key.
 	GetValueFunc(key SnapshotKey) func() float64
+	// Run let the MetricSnapshotHandler listen for new snapshots on the Snapshot channel.
+	Run()
+	// GetMetricsChannel returns the channel to send new snapshots to this MetricSnapshotHandler.
+	GetMetricsChannel() chan *Snapshot
+	// Close stops listening for new Snapshots and closes the Snapshot channel.
+	Close()
 }
 
 // SnapshotKey identifies all the snapshots that were received from a specific device and exported with the specific name.
@@ -44,9 +50,10 @@ type Snapshot struct {
 }
 
 type metricSnapshots struct {
-	lock       sync.RWMutex
-	snapshots  map[SnapshotKey]snapshot
-	registerer prometheus.Registerer
+	lock        sync.RWMutex
+	snapshots   map[SnapshotKey]snapshot
+	registerer  prometheus.Registerer
+	metricsChan chan *Snapshot
 }
 
 type snapshot struct {
@@ -56,9 +63,10 @@ type snapshot struct {
 
 func NewMetricsSnapshotHandler(registerer prometheus.Registerer) MetricSnapshotHandler {
 	return &metricSnapshots{
-		lock:       sync.RWMutex{},
-		snapshots:  make(map[SnapshotKey]snapshot),
-		registerer: registerer,
+		lock:        sync.RWMutex{},
+		snapshots:   make(map[SnapshotKey]snapshot),
+		registerer:  registerer,
+		metricsChan: make(chan *Snapshot),
 	}
 }
 
@@ -120,6 +128,20 @@ func (m *metricSnapshots) GetValueFunc(key SnapshotKey) func() float64 {
 		}
 		return s.value
 	}
+}
+
+func (m *metricSnapshots) Run() {
+	for snap := range m.metricsChan {
+		m.AddSnapshot(snap)
+	}
+}
+
+func (m *metricSnapshots) Close() {
+	close(m.metricsChan)
+}
+
+func (m *metricSnapshots) GetMetricsChannel() chan *Snapshot {
+	return m.metricsChan
 }
 
 func (s *Snapshot) GetKey() SnapshotKey {

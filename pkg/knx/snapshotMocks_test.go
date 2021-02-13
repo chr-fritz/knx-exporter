@@ -86,3 +86,41 @@ func (mr *MockMetricSnapshotHandlerMockRecorder) GetValueFunc(key interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValueFunc", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).GetValueFunc), key)
 }
+
+// Run mocks base method
+func (m *MockMetricSnapshotHandler) Run() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Run")
+}
+
+// Run indicates an expected call of Run
+func (mr *MockMetricSnapshotHandlerMockRecorder) Run() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).Run))
+}
+
+// GetMetricsChannel mocks base method
+func (m *MockMetricSnapshotHandler) GetMetricsChannel() chan *Snapshot {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetricsChannel")
+	ret0, _ := ret[0].(chan *Snapshot)
+	return ret0
+}
+
+// GetMetricsChannel indicates an expected call of GetMetricsChannel
+func (mr *MockMetricSnapshotHandlerMockRecorder) GetMetricsChannel() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsChannel", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).GetMetricsChannel))
+}
+
+// Close mocks base method
+func (m *MockMetricSnapshotHandler) Close() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Close")
+}
+
+// Close indicates an expected call of Close
+func (mr *MockMetricSnapshotHandlerMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).Close))
+}
