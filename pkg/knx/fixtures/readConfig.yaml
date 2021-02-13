@@ -1,6 +1,6 @@
 Connection:
-  Type: "Tunnel"
-  Endpoint: "192.168.1.15:3671"
+  Type: "Router"
+  Endpoint: "224.0.0.120:3672"
   PhysicalAddress: 2.0.1
 MetricsPrefix: knx_
 AddressConfigs:

@@ -43,7 +43,7 @@ func (e *MetricsExporter) Run() error {
 	}
 
 	e.poller = NewPoller(e.config, e.client, e.metrics, e.messageCounter)
-	go e.poller.Run()
+	e.poller.Run()
 
 	go e.metrics.Run()
 
