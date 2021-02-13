@@ -1,6 +1,6 @@
 package knx
 
-//go:generate mockgen -destination=fake/adapterMocks.go -package=fake -source=adapter.go
+//go:generate mockgen -destination=adapterMocks_test.go -package=knx -source=adapter.go
 
 import "github.com/vapourismo/knx-go/knx"
 

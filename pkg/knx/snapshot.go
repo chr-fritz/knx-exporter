@@ -1,5 +1,7 @@
 package knx
 
+//go:generate mockgen -destination=snapshotMocks_test.go -package=knx -self_package=github.com/chr-fritz/knx-exporter/pkg/knx -source=snapshot.go
+
 import (
 	"errors"
 	"fmt"
