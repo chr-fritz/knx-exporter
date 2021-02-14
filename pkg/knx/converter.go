@@ -69,9 +69,7 @@ func collectGroupAddresses(groupRange []export.GroupRange) []export.GroupAddress
 	var addresses []export.GroupAddress
 
 	for _, gr := range groupRange {
-		for _, address := range gr.GroupAddress {
-			addresses = append(addresses, address)
-		}
+		addresses = append(addresses, gr.GroupAddress...)
 		addresses = append(addresses, collectGroupAddresses(gr.GroupRange)...)
 	}
 
