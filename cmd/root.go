@@ -45,7 +45,9 @@ sent "GroupValueWrite" telegrams and can request values itself using
 	}
 
 	cmd.PersistentFlags().StringVar(&rootOptions.configFile, "config", "", "config file (default is $HOME/.knx-exporter.yaml)")
-
+	_ = cmd.RegisterFlagCompletionFunc("config", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{"yaml", "yml", "json"}, cobra.ShellCompDirectiveFilterFileExt
+	})
 	return cmd, rootOptions
 }
 

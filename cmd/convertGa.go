@@ -36,12 +36,22 @@ func NewConvertGaCommand() *cobra.Command {
 
 It takes the XML group address export from the ETS 5 tool and converts it into the yaml format
 used by the exporter.`,
-		Args: cobra.ExactArgs(2),
-		RunE: convertGaOptions.run,
+		Args:              cobra.ExactArgs(2),
+		RunE:              convertGaOptions.run,
+		ValidArgsFunction: convertGaOptions.ValidArgs,
 	}
 }
 
-func (i *ConvertGaOptions) run(cmd *cobra.Command, args []string) error {
+// ValidArgs returns a list of possible arguments.
+func (i *ConvertGaOptions) ValidArgs(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+	if len(args) == 0 {
+		return []string{"xml"}, cobra.ShellCompDirectiveFilterFileExt
+	} else {
+		return nil, cobra.ShellCompDirectiveFilterDirs
+	}
+}
+
+func (i *ConvertGaOptions) run(_ *cobra.Command, args []string) error {
 	return knx.ConvertGroupAddresses(args[0], args[1])
 }
 

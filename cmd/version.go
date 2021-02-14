@@ -36,11 +36,12 @@ func NewVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Show the version information",
+		Args:  cobra.NoArgs,
 		Run:   versionOptions.run,
 	}
 }
 
-func (v *VersionOptions) run(cmd *cobra.Command, args []string) {
+func (v *VersionOptions) run(_ *cobra.Command, _ []string) {
 	parsedDate, _ := strconv.ParseInt(version.CommitDate, 10, 64)
 	commitDate := time.Unix(parsedDate, 0).Format("2006-01-02 15:04:05 Z07:00")
 	fmt.Printf(`KNX Prometheus Exporter

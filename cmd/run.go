@@ -44,12 +44,20 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run",
 		Short: "Run the exporter",
 		Long:  `Run the exporter which exports the received values from all configured Group Addresses to prometheus.`,
+		Args:  cobra.NoArgs,
 		RunE:  runOptions.run,
 	}
+
 	cmd.Flags().Uint16VarP(&runOptions.port, "port", "p", 8080, "The port where all metrics should be exported.")
 	cmd.Flags().StringVarP(&runOptions.configFile, "configFile", "f", "config.yaml", "The knx configuration file.")
 	_ = viper.BindPFlag(RunPortParm, cmd.Flags().Lookup("port"))
 	_ = viper.BindPFlag(RunConfigFileParm, cmd.Flags().Lookup("configFile"))
+	_ = cmd.RegisterFlagCompletionFunc("configFile", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{"yaml", "yml"}, cobra.ShellCompDirectiveFilterFileExt
+	})
+	_ = cmd.RegisterFlagCompletionFunc("port", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	})
 	return &cmd
 }
 
