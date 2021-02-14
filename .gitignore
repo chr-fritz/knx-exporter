@@ -4,3 +4,4 @@ dist/
 completions/
 bin/
 reports/
+.sonarcloud.properties

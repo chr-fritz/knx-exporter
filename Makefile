@@ -2,7 +2,15 @@ SHELL = /usr/bin/env bash -o pipefail -o errexit -o nounset
 NAME := knx-exporter
 ORG := chr-fritz
 ROOT_PACKAGE := github.com/chr-fritz/knx-exporter
-VERSION := v0.0.0-next
+
+TAG_COMMIT := $(shell git rev-list --abbrev-commit --tags --max-count=1)
+TAG := $(shell git describe --abbrev=0 --tags ${TAG_COMMIT} 2>/dev/null || true)
+COMMIT := $(shell git rev-parse --short HEAD)
+VERSION := $(TAG:v%=%)
+ifneq ($(COMMIT), $(TAG_COMMIT))
+    VERSION := $(VERSION)-next
+endif
+
 
 REVISION   := $(shell git rev-parse --short HEAD 2> /dev/null  || echo 'unknown')
 BRANCH     := $(shell git rev-parse --abbrev-ref HEAD 2> /dev/null  || echo 'unknown')
@@ -108,3 +116,7 @@ completions:
 	rm -rf completions
 	mkdir completions
 	for sh in bash zsh fish ps1; do go run main.go completion "$$sh" >"completions/$(NAME).$$sh"; done
+
+.PHONY: sonarcloud-version
+sonarcloud-version:
+	echo "sonar.projectVersion=$(VERSION)" > .sonarcloud.properties
