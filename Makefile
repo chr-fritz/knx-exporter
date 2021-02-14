@@ -119,4 +119,4 @@ completions:
 
 .PHONY: sonarcloud-version
 sonarcloud-version:
-	echo "sonar.projectVersion=$(VERSION)" > .sonarcloud.properties
+	echo "sonar.projectVersion=$(VERSION)" >> sonar-project.properties
