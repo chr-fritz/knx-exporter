@@ -107,4 +107,4 @@ buildDeps:
 completions:
 	rm -rf completions
 	mkdir completions
-	for sh in bash zsh; do go run main.go completion "$$sh" >"completions/$(NAME).$$sh"; done
+	for sh in bash zsh fish ps1; do go run main.go completion "$$sh" >"completions/$(NAME).$$sh"; done
