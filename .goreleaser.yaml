@@ -2,12 +2,11 @@
 # Make sure to check the documentation at http://goreleaser.com
 before:
   hooks:
-    - go install -i github.com/golang/mock/mockgen
+    - make buildDeps
     # You may remove this if you don't use go modules.
     - go mod download
     # you may remove this if you don't need go generate
-    - go generate ./...
-    - make completions
+    - make generate completions
 builds:
   - id: knx-exporter
     env:

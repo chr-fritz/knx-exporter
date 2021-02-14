@@ -19,10 +19,16 @@ jobs:
           go-version: 1.15
 
       - name: Build Dependencies
-        run: go install -i github.com/golang/mock/mockgen && go generate ./...
+        run: make buildDeps
 
       - name: Build
-        run: go build -v ./...
+        run: make build
 
       - name: Test
-        run: go test -v ./...
+        run: make ci-check
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
