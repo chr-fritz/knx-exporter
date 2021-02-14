@@ -72,6 +72,7 @@ brews:
       bin.install "knx-exporter"
       bash_completion.install "completions/knx-exporter.bash" => "knx-exporter"
       zsh_completion.install "completions/knx-exporter.zsh" => "_knx-exporter"
+      fish_completion.install "completions/knx-exporter.fish"
 archives:
   - files:
       - README.md
