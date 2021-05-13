@@ -5,49 +5,48 @@
 package knx
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	knx "github.com/vapourismo/knx-go/knx"
-	reflect "reflect"
 )
 
-// MockGroupClient is a mock of GroupClient interface
+// MockGroupClient is a mock of GroupClient interface.
 type MockGroupClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockGroupClientMockRecorder
 }
 
-// MockGroupClientMockRecorder is the mock recorder for MockGroupClient
+// MockGroupClientMockRecorder is the mock recorder for MockGroupClient.
 type MockGroupClientMockRecorder struct {
 	mock *MockGroupClient
 }
 
-// NewMockGroupClient creates a new mock instance
+// NewMockGroupClient creates a new mock instance.
 func NewMockGroupClient(ctrl *gomock.Controller) *MockGroupClient {
 	mock := &MockGroupClient{ctrl: ctrl}
 	mock.recorder = &MockGroupClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGroupClient) EXPECT() *MockGroupClientMockRecorder {
 	return m.recorder
 }
 
-// Send mocks base method
-func (m *MockGroupClient) Send(event knx.GroupEvent) error {
+// Close mocks base method.
+func (m *MockGroupClient) Close() {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Send", event)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "Close")
 }
 
-// Send indicates an expected call of Send
-func (mr *MockGroupClientMockRecorder) Send(event interface{}) *gomock.Call {
+// Close indicates an expected call of Close.
+func (mr *MockGroupClientMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Send", reflect.TypeOf((*MockGroupClient)(nil).Send), event)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockGroupClient)(nil).Close))
 }
 
-// Inbound mocks base method
+// Inbound mocks base method.
 func (m *MockGroupClient) Inbound() <-chan knx.GroupEvent {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Inbound")
@@ -55,48 +54,50 @@ func (m *MockGroupClient) Inbound() <-chan knx.GroupEvent {
 	return ret0
 }
 
-// Inbound indicates an expected call of Inbound
+// Inbound indicates an expected call of Inbound.
 func (mr *MockGroupClientMockRecorder) Inbound() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Inbound", reflect.TypeOf((*MockGroupClient)(nil).Inbound))
 }
 
-// Close mocks base method
-func (m *MockGroupClient) Close() {
+// Send mocks base method.
+func (m *MockGroupClient) Send(event knx.GroupEvent) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Close")
+	ret := m.ctrl.Call(m, "Send", event)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// Close indicates an expected call of Close
-func (mr *MockGroupClientMockRecorder) Close() *gomock.Call {
+// Send indicates an expected call of Send.
+func (mr *MockGroupClientMockRecorder) Send(event interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockGroupClient)(nil).Close))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Send", reflect.TypeOf((*MockGroupClient)(nil).Send), event)
 }
 
-// MockDPT is a mock of DPT interface
+// MockDPT is a mock of DPT interface.
 type MockDPT struct {
 	ctrl     *gomock.Controller
 	recorder *MockDPTMockRecorder
 }
 
-// MockDPTMockRecorder is the mock recorder for MockDPT
+// MockDPTMockRecorder is the mock recorder for MockDPT.
 type MockDPTMockRecorder struct {
 	mock *MockDPT
 }
 
-// NewMockDPT creates a new mock instance
+// NewMockDPT creates a new mock instance.
 func NewMockDPT(ctrl *gomock.Controller) *MockDPT {
 	mock := &MockDPT{ctrl: ctrl}
 	mock.recorder = &MockDPTMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDPT) EXPECT() *MockDPTMockRecorder {
 	return m.recorder
 }
 
-// Pack mocks base method
+// Pack mocks base method.
 func (m *MockDPT) Pack() []byte {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Pack")
@@ -104,41 +105,13 @@ func (m *MockDPT) Pack() []byte {
 	return ret0
 }
 
-// Pack indicates an expected call of Pack
+// Pack indicates an expected call of Pack.
 func (mr *MockDPTMockRecorder) Pack() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pack", reflect.TypeOf((*MockDPT)(nil).Pack))
 }
 
-// Unpack mocks base method
-func (m *MockDPT) Unpack(data []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Unpack", data)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Unpack indicates an expected call of Unpack
-func (mr *MockDPTMockRecorder) Unpack(data interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unpack", reflect.TypeOf((*MockDPT)(nil).Unpack), data)
-}
-
-// Unit mocks base method
-func (m *MockDPT) Unit() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Unit")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// Unit indicates an expected call of Unit
-func (mr *MockDPTMockRecorder) Unit() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unit", reflect.TypeOf((*MockDPT)(nil).Unit))
-}
-
-// String mocks base method
+// String mocks base method.
 func (m *MockDPT) String() string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "String")
@@ -146,8 +119,36 @@ func (m *MockDPT) String() string {
 	return ret0
 }
 
-// String indicates an expected call of String
+// String indicates an expected call of String.
 func (mr *MockDPTMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockDPT)(nil).String))
+}
+
+// Unit mocks base method.
+func (m *MockDPT) Unit() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Unit")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Unit indicates an expected call of Unit.
+func (mr *MockDPTMockRecorder) Unit() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unit", reflect.TypeOf((*MockDPT)(nil).Unit))
+}
+
+// Unpack mocks base method.
+func (m *MockDPT) Unpack(data []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Unpack", data)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Unpack indicates an expected call of Unpack.
+func (mr *MockDPTMockRecorder) Unpack(data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unpack", reflect.TypeOf((*MockDPT)(nil).Unpack), data)
 }
