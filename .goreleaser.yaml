@@ -16,6 +16,7 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
     ldflags:
       - -X 'github.com/chr-fritz/knx-exporter/version.Version={{.Version}}'
       - -X 'github.com/chr-fritz/knx-exporter/version.Revision={{.ShortCommit}}'
@@ -27,24 +28,14 @@ dockers:
     goarch: amd64
     ids:
       - knx-exporter
-
-    # Templates of the Docker image names.
+    use_buildx: true
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:latest"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}"
-
-    # Skips the docker push. Could be useful if you also do draft releases.
-    # If set to auto, the release will not be pushed to the docker repository
-    # in case there is an indicator for prerelease in the tag e.g. v1.0.0-rc1
-    # Defaults to false.
+      - "quay.io/chrfritz/knx-exporter:latest-x64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-x64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-x64"
     skip_push: false
-
-    # Path to the Dockerfile (from the project root).
     dockerfile: Dockerfile
-
-    # Template of the docker build flags.
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.CommitDate}}"
@@ -53,8 +44,49 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.url=https://github.com/chr-fritz/knx-exporter"
       - "--label=org.opencontainers.image.licenses=Apache-2.0"
+      - "--platform=linux/amd64"
     extra_files:
       - pkg/.knx-exporter.yaml
+  - goos: linux
+    goarch: arm64
+    ids:
+      - knx-exporter
+    use_buildx: true
+    image_templates:
+      - "quay.io/chrfritz/knx-exporter:latest-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64v8"
+    skip_push: false
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.CommitDate}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.url=https://github.com/chr-fritz/knx-exporter"
+      - "--label=org.opencontainers.image.licenses=Apache-2.0"
+      - "--platform=linux/arm64/v8"
+    extra_files:
+      - pkg/.knx-exporter.yaml
+docker_manifests:
+  - name_template: "quay.io/chrfritz/knx-exporter:latest"
+    image_templates:
+      - "quay.io/chrfritz/knx-exporter:latest-x64"
+      - "quay.io/chrfritz/knx-exporter:latest-arm64v8"
+  - name_template: "quay.io/chrfritz/knx-exporter:{{ .Tag }}"
+    image_templates:
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64v8"
+  - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
+    image_templates:
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-x64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64v8"
+  - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}"
+    image_templates:
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-x64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64v8"
 brews:
   - tap:
       owner: chr-fritz
