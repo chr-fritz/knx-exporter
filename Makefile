@@ -107,9 +107,10 @@ clean:
 
 .PHONY: buildDeps
 buildDeps:
-	go install -i github.com/golang/mock/mockgen
-	go install -i github.com/golangci/golangci-lint/cmd/golangci-lint
-	go install -i golang.org/x/tools/cmd/goimports
+	go mod download
+	go get github.com/golang/mock/mockgen
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+	go get golang.org/x/tools/cmd/goimports
 
 .PHONY: completions
 completions:
