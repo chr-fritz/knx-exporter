@@ -14,15 +14,22 @@ builds:
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
+      - arm
       - arm64
+    goarm:
+      - 7
     ldflags:
       - -X 'github.com/chr-fritz/knx-exporter/version.Version={{.Version}}'
       - -X 'github.com/chr-fritz/knx-exporter/version.Revision={{.ShortCommit}}'
       - -X 'github.com/chr-fritz/knx-exporter/version.Branch={{.Branch}}'
       - -X 'github.com/chr-fritz/knx-exporter/version.CommitDate={{.CommitTimestamp}}'
       - -s -w -extldflags '-static'
+    ignore:
+      - goos: windows
+        goarch: arm
 dockers:
   - goos: linux
     goarch: amd64
@@ -53,10 +60,10 @@ dockers:
       - knx-exporter
     use_buildx: true
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:latest-arm64v8"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64v8"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64v8"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:latest-arm64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64"
     skip_push: false
     dockerfile: Dockerfile
     build_flag_templates:
@@ -70,23 +77,51 @@ dockers:
       - "--platform=linux/arm64/v8"
     extra_files:
       - pkg/.knx-exporter.yaml
+  - goos: linux
+    goarch: arm
+    goarm: 7
+    ids:
+      - knx-exporter
+    use_buildx: true
+    image_templates:
+      - "quay.io/chrfritz/knx-exporter:latest-arm7"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm7"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm7"
+    skip_push: false
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.CommitDate}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.url=https://github.com/chr-fritz/knx-exporter"
+      - "--label=org.opencontainers.image.licenses=Apache-2.0"
+      - "--platform=linux/arm/v7"
+    extra_files:
+      - pkg/.knx-exporter.yaml
 docker_manifests:
   - name_template: "quay.io/chrfritz/knx-exporter:latest"
     image_templates:
       - "quay.io/chrfritz/knx-exporter:latest-x64"
-      - "quay.io/chrfritz/knx-exporter:latest-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:latest-arm64"
+      - "quay.io/chrfritz/knx-exporter:latest-arm7"
   - name_template: "quay.io/chrfritz/knx-exporter:{{ .Tag }}"
     image_templates:
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
     image_templates:
       - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-x64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm7"
   - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}"
     image_templates:
       - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-x64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64v8"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm7"
 brews:
   - tap:
       owner: chr-fritz
