@@ -4,6 +4,7 @@
 [![Go build](https://github.com/chr-fritz/knx-exporter/workflows/Go%20build/badge.svg)](https://github.com/chr-fritz/knx-exporter/actions?query=workflow%3A%22Go+build%22)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=chr-fritz_knx-exporter&metric=coverage)](https://sonarcloud.io/dashboard?id=chr-fritz_knx-exporter)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=chr-fritz_knx-exporter&metric=alert_status)](https://sonarcloud.io/dashboard?id=chr-fritz_knx-exporter)
+[![Go Reference](https://pkg.go.dev/badge/github.com/chr-fritz/knx-exporter.svg)](https://pkg.go.dev/github.com/chr-fritz/knx-exporter)
 
 The KNX Prometheus Exporter is a small bridge to export values measured by KNX sensors to
 Prometheus. It takes the values either from cyclic sent `GroupValueWrite` telegrams and can request
