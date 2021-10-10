@@ -78,11 +78,13 @@ func (m *metricSnapshots) AddSnapshot(s *Snapshot) {
 	if ok {
 		meta.snapshot = s
 	} else {
-		meta = snapshot{
-			snapshot: s,
-			metric:   createMetric(s, m.GetValueFunc(key)),
+		metric, err := createMetric(s, m.GetValueFunc(key))
+		if err != nil {
+			logrus.Warn(err)
+			return
 		}
-		err := m.registerer.Register(meta.metric)
+		meta = snapshot{snapshot: s, metric: metric}
+		err = m.registerer.Register(meta.metric)
 		if err != nil && !errors.Is(err, prometheus.AlreadyRegisteredError{}) {
 			logrus.Warnf("Can not register new metric %s from %s: %s", s.name, s.source.String(), err)
 		}
@@ -151,7 +153,7 @@ func (s *Snapshot) GetKey() SnapshotKey {
 	}
 }
 
-func createMetric(s *Snapshot, getter func() float64) prometheus.Collector {
+func createMetric(s *Snapshot, getter func() float64) (prometheus.Collector, error) {
 	var metric prometheus.Collector
 	if strings.ToLower(s.config.MetricType) == "counter" {
 		metric = prometheus.NewCounterFunc(
@@ -171,6 +173,8 @@ func createMetric(s *Snapshot, getter func() float64) prometheus.Collector {
 			},
 			getter,
 		)
+	} else {
+		return nil, fmt.Errorf("can not create metric '%s' for metric typ '%s'", s.name, s.config.MetricType)
 	}
-	return metric
+	return metric, nil
 }
