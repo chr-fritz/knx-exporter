@@ -53,9 +53,15 @@ func (e *MetricsExporter) Run() error {
 }
 
 func (e *MetricsExporter) Close() {
-	e.poller.Close()
-	e.client.Close()
-	e.metrics.Close()
+	if e.poller != nil {
+		e.poller.Close()
+	}
+	if e.client != nil {
+		e.client.Close()
+	}
+	if e.metrics != nil {
+		e.metrics.Close()
+	}
 }
 
 func (e *MetricsExporter) IsAlive() error {
