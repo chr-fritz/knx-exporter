@@ -35,7 +35,7 @@ dockers:
     goarch: amd64
     ids:
       - knx-exporter
-    use_buildx: true
+    use: buildx
     image_templates:
       - "quay.io/chrfritz/knx-exporter:latest-x64"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
@@ -58,7 +58,7 @@ dockers:
     goarch: arm64
     ids:
       - knx-exporter
-    use_buildx: true
+    use: buildx
     image_templates:
       - "quay.io/chrfritz/knx-exporter:latest-arm64"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
@@ -82,7 +82,7 @@ dockers:
     goarm: 7
     ids:
       - knx-exporter
-    use_buildx: true
+    use: buildx
     image_templates:
       - "quay.io/chrfritz/knx-exporter:latest-arm7"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
