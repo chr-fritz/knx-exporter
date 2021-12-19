@@ -65,6 +65,13 @@ func (e *MetricsExporter) Close() {
 }
 
 func (e *MetricsExporter) IsAlive() error {
+	if !e.listener.IsActive() {
+		return fmt.Errorf("listener is closed")
+	}
+	if !e.metrics.IsActive() {
+		return fmt.Errorf("metric snapshot handler is closed")
+	}
+
 	return e.health
 }
 

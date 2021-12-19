@@ -114,6 +114,20 @@ func (mr *MockMetricSnapshotHandlerMockRecorder) GetValueFunc(key interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValueFunc", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).GetValueFunc), key)
 }
 
+// IsActive mocks base method.
+func (m *MockMetricSnapshotHandler) IsActive() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsActive")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsActive indicates an expected call of IsActive.
+func (mr *MockMetricSnapshotHandlerMockRecorder) IsActive() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsActive", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).IsActive))
+}
+
 // Run mocks base method.
 func (m *MockMetricSnapshotHandler) Run() {
 	m.ctrl.T.Helper()

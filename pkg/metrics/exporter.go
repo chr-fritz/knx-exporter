@@ -3,9 +3,11 @@ package metrics
 //go:generate mockgen -destination=fake/exporterMocks.go -package=fake -source=exporter.go
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -15,10 +17,12 @@ type exporter struct {
 	Port          uint16
 	health        healthcheck.Handler
 	meterRegistry prometheus.Registerer
+	server        *http.Server
 }
 
 type Exporter interface {
 	Run() error
+	Shutdown() error
 	MustRegister(collectors ...prometheus.Collector)
 	Register(collector prometheus.Collector) error
 	Unregister(collector prometheus.Collector) bool
@@ -31,19 +35,27 @@ func NewExporter(port uint16) Exporter {
 		Port:          port,
 		health:        healthcheck.NewHandler(),
 		meterRegistry: prometheus.DefaultRegisterer,
+		server:        &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", port)},
 	}
 }
 
 func (e exporter) Run() error {
 	server := http.NewServeMux()
-	listenAddr := fmt.Sprintf("0.0.0.0:%d", e.Port)
 
 	server.HandleFunc("/live", e.health.LiveEndpoint)
 	server.HandleFunc("/ready", e.health.ReadyEndpoint)
 	handler := promhttp.Handler()
 	server.Handle("/metrics", handler)
-	return http.ListenAndServe(listenAddr, server)
+	_, _ = daemon.SdNotify(false, daemon.SdNotifyReady)
+
+	e.server.Handler = server
+	return e.server.ListenAndServe()
 }
+func (e exporter) Shutdown() error {
+	ctx := context.Background()
+	return e.server.Shutdown(ctx)
+}
+
 func (e exporter) MustRegister(collectors ...prometheus.Collector) {
 	e.meterRegistry.MustRegister(collectors...)
 }

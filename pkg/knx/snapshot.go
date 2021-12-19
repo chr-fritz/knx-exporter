@@ -31,6 +31,8 @@ type MetricSnapshotHandler interface {
 	GetMetricsChannel() chan *Snapshot
 	// Close stops listening for new Snapshots and closes the Snapshot channel.
 	Close()
+	// IsActive indicates that this handler is active and waits for new metric snapshots
+	IsActive() bool
 }
 
 // SnapshotKey identifies all the snapshots that were received from a specific device and exported with the specific name.
@@ -54,6 +56,7 @@ type metricSnapshots struct {
 	snapshots   map[SnapshotKey]snapshot
 	registerer  prometheus.Registerer
 	metricsChan chan *Snapshot
+	active      bool
 }
 
 type snapshot struct {
@@ -67,6 +70,7 @@ func NewMetricsSnapshotHandler(registerer prometheus.Registerer) MetricSnapshotH
 		snapshots:   make(map[SnapshotKey]snapshot),
 		registerer:  registerer,
 		metricsChan: make(chan *Snapshot),
+		active:      true,
 	}
 }
 
@@ -133,9 +137,14 @@ func (m *metricSnapshots) GetValueFunc(key SnapshotKey) func() float64 {
 }
 
 func (m *metricSnapshots) Run() {
+	defer func() { m.active = false }()
 	for snap := range m.metricsChan {
 		m.AddSnapshot(snap)
 	}
+}
+
+func (m *metricSnapshots) IsActive() bool {
+	return m.active
 }
 
 func (m *metricSnapshots) Close() {

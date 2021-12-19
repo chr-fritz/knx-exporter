@@ -14,6 +14,7 @@ import (
 
 type Listener interface {
 	Run()
+	IsActive() bool
 }
 
 type listener struct {
@@ -21,6 +22,7 @@ type listener struct {
 	inbound        <-chan knx.GroupEvent
 	metricsChan    chan *Snapshot
 	messageCounter *prometheus.CounterVec
+	active         bool
 }
 
 func NewListener(config *Config, inbound <-chan knx.GroupEvent, metricsChan chan *Snapshot, messageCounter *prometheus.CounterVec) Listener {
@@ -29,14 +31,23 @@ func NewListener(config *Config, inbound <-chan knx.GroupEvent, metricsChan chan
 		inbound:        inbound,
 		metricsChan:    metricsChan,
 		messageCounter: messageCounter,
+		active:         true,
 	}
 }
 
 func (l *listener) Run() {
 	logrus.Info("Waiting for incoming knx telegrams...")
+	defer func() {
+		l.active = false
+	}()
 	for msg := range l.inbound {
 		l.handleEvent(msg)
 	}
+	logrus.Warn("Finished listening for incoming knx telegrams")
+}
+
+func (l *listener) IsActive() bool {
+	return l.active
 }
 
 func (l *listener) handleEvent(event knx.GroupEvent) {

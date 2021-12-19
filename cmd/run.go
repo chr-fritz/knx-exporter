@@ -15,7 +15,13 @@
 package cmd
 
 import (
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/heptiolabs/healthcheck"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -25,10 +31,12 @@ import (
 
 const RunPortParm = "exporter.port"
 const RunConfigFileParm = "exporter.configFile"
+const RunRestartParm = "exporter.restart"
 
 type RunOptions struct {
 	port       uint16
 	configFile string
+	restart    string
 }
 
 func NewRunOptions() *RunOptions {
@@ -50,33 +58,73 @@ func NewRunCommand() *cobra.Command {
 
 	cmd.Flags().Uint16VarP(&runOptions.port, "port", "p", 8080, "The port where all metrics should be exported.")
 	cmd.Flags().StringVarP(&runOptions.configFile, "configFile", "f", "config.yaml", "The knx configuration file.")
+	cmd.Flags().StringVarP(&runOptions.restart, "restart", "r", "health", "The restart behaviour. Can be health or exit")
 	_ = viper.BindPFlag(RunPortParm, cmd.Flags().Lookup("port"))
 	_ = viper.BindPFlag(RunConfigFileParm, cmd.Flags().Lookup("configFile"))
+	_ = viper.BindPFlag(RunRestartParm, cmd.Flags().Lookup("restart"))
 	_ = cmd.RegisterFlagCompletionFunc("configFile", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{"yaml", "yml"}, cobra.ShellCompDirectiveFilterFileExt
 	})
 	_ = cmd.RegisterFlagCompletionFunc("port", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	})
+	_ = cmd.RegisterFlagCompletionFunc("restart", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{"health", "exit"}, cobra.ShellCompDirectiveDefault
+	})
 	return &cmd
 }
 
 func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
 	exporter := metrics.NewExporter(i.port)
-	metricsExporter, err := knx.NewMetricsExporter(i.configFile, exporter)
+
+	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
+	metricsExporter, err := i.initAndRunMetricsExporter(exporter)
 	if err != nil {
 		return err
 	}
+
+	go i.aliveCheck(exporter, metricsExporter)
+
 	defer metricsExporter.Close()
+	return exporter.Run()
+}
 
-	exporter.AddLivenessCheck("knxConnection", metricsExporter.IsAlive)
-	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
+func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter *knx.MetricsExporter) {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	ticker := time.NewTicker(10 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			aliveErr := metricsExporter.IsAlive()
+			if aliveErr != nil {
+				_, _ = daemon.SdNotify(false, "STATUS=Metrics Exporter is not alive anymore: "+aliveErr.Error())
+				_, _ = daemon.SdNotify(false, "ERROR=1")
+				if i.restart == "exit" {
+					stop <- os.Interrupt
+				}
+			}
+		case <-stop:
+			err := exporter.Shutdown()
+			if err != nil {
+				logrus.Warn("Shutdown failed: ", err)
+			}
+		}
+	}
+}
 
-	if e := metricsExporter.Run(); e != nil {
-		return e
+func (i *RunOptions) initAndRunMetricsExporter(exporter metrics.Exporter) (*knx.MetricsExporter, error) {
+	metricsExporter, err := knx.NewMetricsExporter(i.configFile, exporter)
+	if err != nil {
+		return nil, err
 	}
 
-	return exporter.Run()
+	exporter.AddLivenessCheck("knxConnection", metricsExporter.IsAlive)
+	if e := metricsExporter.Run(); e != nil {
+		return nil, e
+	}
+
+	return metricsExporter, nil
 }
 
 func init() {

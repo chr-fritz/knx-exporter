@@ -3,6 +3,7 @@ module github.com/chr-fritz/knx-exporter
 go 1.16
 
 require (
+	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.6.0
