@@ -10,6 +10,9 @@ The KNX Prometheus Exporter is a small bridge to export values measured by KNX s
 Prometheus. It takes the values either from cyclic sent `GroupValueWrite` telegrams and can request
 values itself using `GroupValueRead` telegrams.
 
+The data stored in prometheus can be visualized with [Grafana](https://grafana.com/). This could
+look like the this screenshot:
+![Grafana Screenshot](grafana-screenshot.png)
 
 ## Installing
 
