@@ -34,14 +34,16 @@ const RunConfigFileParm = "exporter.configFile"
 const RunRestartParm = "exporter.restart"
 
 type RunOptions struct {
-	port       uint16
-	configFile string
-	restart    string
+	port               uint16
+	configFile         string
+	restart            string
+	aliveCheckInterval time.Duration
 }
 
 func NewRunOptions() *RunOptions {
 	return &RunOptions{
-		port: 8080,
+		port:               8080,
+		aliveCheckInterval: 10 * time.Second,
 	}
 }
 
@@ -92,7 +94,7 @@ func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
 func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.MetricsExporter) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(i.aliveCheckInterval)
 	for {
 		select {
 		case <-ticker.C:
@@ -109,6 +111,7 @@ func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.M
 			if err != nil {
 				logrus.Warn("Shutdown failed: ", err)
 			}
+			return
 		}
 	}
 }
