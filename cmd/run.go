@@ -89,7 +89,7 @@ func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
 	return exporter.Run()
 }
 
-func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter *knx.MetricsExporter) {
+func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.MetricsExporter) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	ticker := time.NewTicker(10 * time.Second)
@@ -113,7 +113,7 @@ func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter *knx.
 	}
 }
 
-func (i *RunOptions) initAndRunMetricsExporter(exporter metrics.Exporter) (*knx.MetricsExporter, error) {
+func (i *RunOptions) initAndRunMetricsExporter(exporter metrics.Exporter) (knx.MetricsExporter, error) {
 	metricsExporter, err := knx.NewMetricsExporter(i.configFile, exporter)
 	if err != nil {
 		return nil, err

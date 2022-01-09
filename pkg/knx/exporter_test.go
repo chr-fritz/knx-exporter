@@ -29,8 +29,9 @@ func TestNewMetricsExporter(t *testing.T) {
 	defer ctrl.Finish()
 	exporter := fake.NewMockExporter(ctrl)
 	exporter.EXPECT().Register(gomock.Any()).AnyTimes()
-
-	metricsExporter, err := NewMetricsExporter("fixtures/readConfig.yaml", exporter)
+	exp, err := NewMetricsExporter("fixtures/readConfig.yaml", exporter)
+	metricsExporter, ok := exp.(*metricsExporter)
+	assert.True(t, ok)
 	assert.NoError(t, err)
 
 	err = metricsExporter.Run()
@@ -57,7 +58,7 @@ func TestMetricsExporter_createClient(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &MetricsExporter{
+			e := &metricsExporter{
 				config: tt.config,
 			}
 			if err := e.createClient(); (err != nil) != tt.wantErr {

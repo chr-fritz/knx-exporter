@@ -14,6 +14,8 @@
 
 package knx
 
+//go:generate mockgen -destination=fake/exporterMocks.go -package=fake -source=exporter.go
+
 import (
 	"fmt"
 
@@ -22,7 +24,13 @@ import (
 	"github.com/vapourismo/knx-go/knx"
 )
 
-type MetricsExporter struct {
+type MetricsExporter interface {
+	Run() error
+	Close()
+	IsAlive() error
+}
+
+type metricsExporter struct {
 	config *Config
 	client GroupClient
 
@@ -33,12 +41,12 @@ type MetricsExporter struct {
 	health         error
 }
 
-func NewMetricsExporter(configFile string, registerer prometheus.Registerer) (*MetricsExporter, error) {
+func NewMetricsExporter(configFile string, registerer prometheus.Registerer) (MetricsExporter, error) {
 	config, err := ReadConfig(configFile)
 	if err != nil {
 		return nil, err
 	}
-	m := &MetricsExporter{
+	m := &metricsExporter{
 		config:  config,
 		metrics: NewMetricsSnapshotHandler(registerer),
 		messageCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -50,7 +58,7 @@ func NewMetricsExporter(configFile string, registerer prometheus.Registerer) (*M
 	return m, nil
 }
 
-func (e *MetricsExporter) Run() error {
+func (e *metricsExporter) Run() error {
 	if err := e.createClient(); err != nil {
 		e.health = err
 		return err
@@ -66,7 +74,7 @@ func (e *MetricsExporter) Run() error {
 	return nil
 }
 
-func (e *MetricsExporter) Close() {
+func (e *metricsExporter) Close() {
 	if e.poller != nil {
 		e.poller.Close()
 	}
@@ -78,7 +86,7 @@ func (e *MetricsExporter) Close() {
 	}
 }
 
-func (e *MetricsExporter) IsAlive() error {
+func (e *metricsExporter) IsAlive() error {
 	if !e.listener.IsActive() {
 		return fmt.Errorf("listener is closed")
 	}
@@ -89,7 +97,7 @@ func (e *MetricsExporter) IsAlive() error {
 	return e.health
 }
 
-func (e *MetricsExporter) createClient() error {
+func (e *metricsExporter) createClient() error {
 	switch e.config.Connection.Type {
 	case Tunnel:
 		logrus.Infof("Connect to %s using tunneling", e.config.Connection.Endpoint)
