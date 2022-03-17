@@ -65,19 +65,21 @@ simplest fully configuration will look like this:
 
 ```yaml
 Connection:
-  Type: "Tunnel"
-  Endpoint: "192.168.1.15:3671"
-  PhysicalAddress: 2.0.1
+    Type: "Tunnel"
+    Endpoint: "192.168.1.15:3671"
+    PhysicalAddress: 2.0.1
 MetricsPrefix: knx_
 AddressConfigs:
-  0/0/1:
-    Name: dummy_metric
-    DPT: 1.*
-    Export: true
-    MetricType: "counter"
-    ReadActive: true
-    MaxAge: 10m
-    Comment: dummy comment
+    0/0/1:
+        Name: dummy_metric
+        DPT: 1.*
+        Export: true
+        MetricType: "counter"
+        ReadActive: true
+        MaxAge: 10m
+        Comment: dummy comment
+        Labels:
+            room: office
 ```
 
 In the next sections we will describe the meanings for every statement.
@@ -107,17 +109,20 @@ exported to prometheus. It contains the following structure for every exported g
 
 ```yaml
   0/0/1:
-    Name: dummy_metric
-    DPT: 1.*
-    Export: true
-    MetricType: "counter"
-    ReadActive: true
-    MaxAge: 10m
-    Comment: dummy comment
+      Name: dummy_metric
+      DPT: 1.*
+      Export: true
+      MetricType: "counter"
+      ReadActive: true
+      MaxAge: 10m
+      Comment: dummy comment
+      Labels:
+          room: office
 ```
 
 The first line `0/0/1` defines the group address which should be exported. It can be written in all
 three valid forms:
+
 - Two layers: `0/1`
 - Three layers: `0/0/1`
 - Free structure `123`
@@ -144,6 +149,8 @@ Next it defines the actual information for a single group address:
   be ignored if `ReadActive` is set to `false`.
 - `Comment` a short comment for the group address. Will be also exported as comment within the
   prometheus metrics.
+- `Labels` are additional information for a specific time series. A common usage of labels could be
+  a label `room` which identifies the room for a metric `current_temperature`.
 
 ### Running the exporter
 
@@ -163,9 +170,9 @@ Beside exported metrics from KNX group addresses it exports some additional metr
 can be grouped into three groups:
 
 1. **KNX Message Metrics:** Three counter metrics which counts the number of
-   - received messages `knx_messages{direction="received",processed="false"}`
-   - processed received messages `knx_messages{direction="received",processed="true"}` and
-   - sent messages `knx_messages{direction="sent",processed="true"}`.
+    - received messages `knx_messages{direction="received",processed="false"}`
+    - processed received messages `knx_messages{direction="received",processed="true"}` and
+    - sent messages `knx_messages{direction="sent",processed="true"}`.
 2. **HTTP Metrics:** Counts the processed number of successfully and failed http requests. All
    metrics starts with `promhttp_`.
 3. **GoLang Metrics:** These are metrics which indicates some health information about memory, cpu
@@ -180,8 +187,8 @@ recommended in enviroments like Kubernetes. They are reachable under `/live` and
 ## Contributing
 
 1. Fork it
-2. Download your fork to your PC (`git clone https://github.com/your_username/knx-exporter && cd
-   knx-exporter`)
+2. Download your fork to your
+   PC (`git clone https://github.com/your_username/knx-exporter && cd knx-exporter`)
 3. Create your feature branch (`git checkout -b my-new-feature`)
 4. Make changes and add them (`git add .`)
 5. Commit your changes (`git commit -m 'Add some feature'`)

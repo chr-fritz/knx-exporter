@@ -131,6 +131,8 @@ type GroupAddressConfig struct {
 	ReadActive bool `json:",omitempty"`
 	// MaxAge of a value until it will actively send a `GroupValueRead` telegram to read the value if ReadActive is set to true.
 	MaxAge Duration `json:",omitempty"`
+	// Labels defines static labels that should be set when exporting the metric using prometheus.
+	Labels map[string]string `json:",omitempty"`
 }
 
 // GroupAddressConfigSet is a shortcut type for the group address config map.

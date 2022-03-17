@@ -178,12 +178,13 @@ func (s *Snapshot) GetKey() SnapshotKey {
 
 func createMetric(s *Snapshot, getter func() float64) (prometheus.Collector, error) {
 	var metric prometheus.Collector
+
 	if strings.ToLower(s.config.MetricType) == "counter" {
 		metric = prometheus.NewCounterFunc(
 			prometheus.CounterOpts{
 				Name:        s.name,
 				Help:        fmt.Sprintf("Value of %s\n%s", s.destination.String(), s.config.Comment),
-				ConstLabels: map[string]string{"physicalAddress": s.source.String()},
+				ConstLabels: getSnapshotLabels(s),
 			},
 			getter,
 		)
@@ -192,7 +193,7 @@ func createMetric(s *Snapshot, getter func() float64) (prometheus.Collector, err
 			prometheus.GaugeOpts{
 				Name:        s.name,
 				Help:        fmt.Sprintf("Value of %s\n%s", s.destination.String(), s.config.Comment),
-				ConstLabels: map[string]string{"physicalAddress": s.source.String()},
+				ConstLabels: getSnapshotLabels(s),
 			},
 			getter,
 		)
@@ -200,4 +201,17 @@ func createMetric(s *Snapshot, getter func() float64) (prometheus.Collector, err
 		return nil, fmt.Errorf("can not create metric '%s' for metric typ '%s'", s.name, s.config.MetricType)
 	}
 	return metric, nil
+}
+
+// getSnapshotLabels returns a full list of all labels that should be added to the given metric.
+func getSnapshotLabels(s *Snapshot) map[string]string {
+	var labels = map[string]string{
+		"physicalAddress": s.source.String(),
+	}
+	if s.config.Labels != nil {
+		for name, value := range s.config.Labels {
+			labels[name] = value
+		}
+	}
+	return labels
 }
