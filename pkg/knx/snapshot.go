@@ -183,7 +183,6 @@ func createMetric(s *Snapshot, getter func() float64) (prometheus.Collector, err
 		metric = prometheus.NewCounterFunc(
 			prometheus.CounterOpts{
 				Name:        s.name,
-				Help:        fmt.Sprintf("Value of %s\n%s", s.destination.String(), s.config.Comment),
 				ConstLabels: getSnapshotLabels(s),
 			},
 			getter,
@@ -192,7 +191,6 @@ func createMetric(s *Snapshot, getter func() float64) (prometheus.Collector, err
 		metric = prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
 				Name:        s.name,
-				Help:        fmt.Sprintf("Value of %s\n%s", s.destination.String(), s.config.Comment),
 				ConstLabels: getSnapshotLabels(s),
 			},
 			getter,
