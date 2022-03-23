@@ -33,7 +33,7 @@ func TestSnapshot_GetKey(t *testing.T) {
 		snapshot *Snapshot
 		want     SnapshotKey
 	}{
-		{"ok", &Snapshot{name: "metricName", source: 1}, SnapshotKey{name: "metricName", source: 1}},
+		{"ok", &Snapshot{name: "metricName", source: 1, config: &GroupAddressConfig{Labels: nil}}, SnapshotKey{name: "metricName", source: 1}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -52,7 +52,7 @@ func Test_metricSnapshots_AddSnapshot(t *testing.T) {
 		wantRegister int
 	}{
 		{"new counter", &Snapshot{name: "a", source: 1, config: &GroupAddressConfig{MetricType: "counter"}}, SnapshotKey{name: "a", source: 1}, 1},
-		{"new gauge", &Snapshot{name: "b", source: 1, config: &GroupAddressConfig{MetricType: "gauge", Labels: map[string]string{"room": "office"}}}, SnapshotKey{name: "b", source: 1}, 1},
+		{"new gauge", &Snapshot{name: "b", source: 1, config: &GroupAddressConfig{MetricType: "gauge", Labels: map[string]string{"room": "office"}}}, SnapshotKey{name: "b", source: 1, labels: snapshotKeyLabels("{\"room\":\"office\"}")}, 1},
 		{"update", &Snapshot{name: "c", source: 1, config: &GroupAddressConfig{MetricType: "gauge"}}, SnapshotKey{name: "c", source: 1}, 0},
 	}
 	for _, tt := range tests {

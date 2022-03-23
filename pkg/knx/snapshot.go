@@ -17,6 +17,7 @@ package knx
 //go:generate mockgen -destination=snapshotMocks_test.go -package=knx -self_package=github.com/chr-fritz/knx-exporter/pkg/knx -source=snapshot.go
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -49,10 +50,13 @@ type MetricSnapshotHandler interface {
 	IsActive() bool
 }
 
+type snapshotKeyLabels string
+
 // SnapshotKey identifies all the snapshots that were received from a specific device and exported with the specific name.
 type SnapshotKey struct {
 	name   string
 	source PhysicalAddress
+	labels snapshotKeyLabels
 }
 
 // Snapshot stores all information about a single metric snapshot.
@@ -170,9 +174,18 @@ func (m *metricSnapshots) GetMetricsChannel() chan *Snapshot {
 }
 
 func (s *Snapshot) GetKey() SnapshotKey {
+	var labels []byte = nil
+	if s.config.Labels != nil {
+		var e error
+		labels, e = json.Marshal(s.config.Labels)
+		if e != nil {
+			panic("can not create labels key")
+		}
+	}
 	return SnapshotKey{
 		name:   s.name,
 		source: s.source,
+		labels: snapshotKeyLabels(labels),
 	}
 }
 
