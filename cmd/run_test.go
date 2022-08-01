@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"testing"
 	"time"
 
@@ -28,8 +29,8 @@ func TestRunOptions_aliveCheck(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	viper.Set(RunRestartParm, "exit")
 	i := &RunOptions{
-		restart:            "exit",
 		aliveCheckInterval: 10 * time.Millisecond,
 	}
 
