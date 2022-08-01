@@ -34,15 +34,11 @@ const RunConfigFileParm = "exporter.configFile"
 const RunRestartParm = "exporter.restart"
 
 type RunOptions struct {
-	port               uint16
-	configFile         string
-	restart            string
 	aliveCheckInterval time.Duration
 }
 
 func NewRunOptions() *RunOptions {
 	return &RunOptions{
-		port:               8080,
 		aliveCheckInterval: 10 * time.Second,
 	}
 }
@@ -58,9 +54,9 @@ func NewRunCommand() *cobra.Command {
 		RunE:  runOptions.run,
 	}
 
-	cmd.Flags().Uint16VarP(&runOptions.port, "port", "p", 8080, "The port where all metrics should be exported.")
-	cmd.Flags().StringVarP(&runOptions.configFile, "configFile", "f", "config.yaml", "The knx configuration file.")
-	cmd.Flags().StringVarP(&runOptions.restart, "restart", "r", "health", "The restart behaviour. Can be health or exit")
+	cmd.Flags().Uint16P("port", "p", 8080, "The port where all metrics should be exported.")
+	cmd.Flags().StringP("configFile", "f", "config.yaml", "The knx configuration file.")
+	cmd.Flags().StringP("restart", "r", "health", "The restart behaviour. Can be health or exit")
 	_ = viper.BindPFlag(RunPortParm, cmd.Flags().Lookup("port"))
 	_ = viper.BindPFlag(RunConfigFileParm, cmd.Flags().Lookup("configFile"))
 	_ = viper.BindPFlag(RunRestartParm, cmd.Flags().Lookup("restart"))
@@ -77,7 +73,7 @@ func NewRunCommand() *cobra.Command {
 }
 
 func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
-	exporter := metrics.NewExporter(i.port)
+	exporter := metrics.NewExporter(uint16(viper.GetUint(RunPortParm)))
 
 	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
 	metricsExporter, err := i.initAndRunMetricsExporter(exporter)
@@ -102,7 +98,7 @@ func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.M
 			if aliveErr != nil {
 				_, _ = daemon.SdNotify(false, "STATUS=Metrics Exporter is not alive anymore: "+aliveErr.Error())
 				_, _ = daemon.SdNotify(false, "ERROR=1")
-				if i.restart == "exit" {
+				if viper.GetString(RunRestartParm) == "exit" {
 					stop <- os.Interrupt
 				}
 			}
@@ -117,7 +113,7 @@ func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.M
 }
 
 func (i *RunOptions) initAndRunMetricsExporter(exporter metrics.Exporter) (knx.MetricsExporter, error) {
-	metricsExporter, err := knx.NewMetricsExporter(i.configFile, exporter)
+	metricsExporter, err := knx.NewMetricsExporter(viper.GetString(RunConfigFileParm), exporter)
 	if err != nil {
 		return nil, err
 	}
