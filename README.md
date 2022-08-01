@@ -14,6 +14,29 @@ The data stored in prometheus can be visualized with [Grafana](https://grafana.c
 look like the this screenshot:
 ![Grafana Screenshot](grafana-screenshot.png)
 
+<!-- TOC -->
+
+* [KNX Prometheus Exporter](#knx-prometheus-exporter)
+    * [Installing](#installing)
+        * [macOS](#macos)
+        * [Docker](#docker)
+        * [Other](#other)
+    * [Usage](#usage)
+        * [Converting the ETS 5 Group Export to a configuration](#converting-the-ets-5-group-export-to-a-configuration)
+        * [Preparing the configuration](#preparing-the-configuration)
+            * [The `Connection` section](#the-connection-section)
+            * [The `MetricsPrefix`](#the-metricsprefix)
+            * [The `AddressConfigs` section](#the-addressconfigs-section)
+        * [Running the exporter](#running-the-exporter)
+        * [Running the exporter using docker](#running-the-exporter-using-docker)
+    * [Exported metrics](#exported-metrics)
+    * [Health Check Endpoints](#health-check-endpoints)
+    * [Contributing](#contributing)
+    * [License](#license)
+    * [Maintainer](#maintainer)
+
+<!-- TOC -->
+
 ## Installing
 
 ### macOS
