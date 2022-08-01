@@ -14,8 +14,9 @@
 
 FROM scratch
 COPY knx-exporter /
-COPY pkg/.knx-exporter.yaml /etc/.knx-exporter.yaml
+COPY pkg/.knx-exporter.yaml /etc/knx-exporter.yaml
 EXPOSE 8080/tcp
 EXPOSE 3671/udp
+VOLUME /etc/knx-exporter
 ENTRYPOINT ["/knx-exporter"]
-CMD ["run", "--config","/etc/.knx-exporter.yaml"]
+CMD ["run", "--config","/etc/knx-exporter.yaml"]

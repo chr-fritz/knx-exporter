@@ -164,6 +164,18 @@ You must replace `[CONFIG-FILE]` with the path to your configuration file that y
 previous step. After starting the exporter you can open
 [`http://localhost:8080/metrics`](http://localhost:8080/metrics) to view the exported metrics.
 
+### Running the exporter using docker
+
+It is also possible to run the KNX Exporter using docker. For this just run the following command:
+
+```shell script
+docker run -p 8080:8080 -v [CONFIG-FILE]:/etc/knx-exporter/ga-config.yaml quay.io/chrfritz/knx-exporter
+```
+
+As before you must replace `[CONFIG-FILE]` with the path to your configuration file that you
+prepared in the previous step then you can open
+[`http://localhost:8080/metrics`](http://localhost:8080/metrics) to view the exported metrics.
+
 ## Exported metrics
 
 Beside exported metrics from KNX group addresses it exports some additional metrics. This metrics
