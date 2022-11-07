@@ -17,7 +17,7 @@ module github.com/chr-fritz/knx-exporter
 go 1.19
 
 require (
-	github.com/coreos/go-systemd/v22 v22.4.0
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/glog v1.0.0
 	github.com/golang/mock v1.6.0
