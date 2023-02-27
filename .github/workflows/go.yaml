@@ -29,8 +29,8 @@ jobs:
         run: make ci-check
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        if: github.event_name != 'pull_request'
+        uses: SonarSource/sonarcloud-github-action@v1.8
+        if: (github.event_name != 'pull_request' && env.SONAR_TOKEN != '')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
