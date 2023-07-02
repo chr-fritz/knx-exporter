@@ -204,3 +204,16 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+release:
+  footer: |
+    ## Docker Images
+
+    [quay.io/chrfritz/knx-exporter](https://quay.io/chrfritz/knx-exporter)
+    * `quay.io/chrfritz/knx-exporter:latest`
+    * `quay.io/chrfritz/knx-exporter:{{ .Tag }}`
+    * `quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}`
+    * `quay.io/chrfritz/knx-exporter:v{{ .Major }}`
+
+    ## Thanks!
+
+    Those were the changes on {{ .Tag }}!
