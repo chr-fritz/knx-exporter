@@ -1,0 +1,20 @@
+[Unit]
+Description=KNX Prometheus exporter
+After=network.target
+ConditionPathExists=!/etc/knx-exporter/knx-exporter_not_to_be_run
+[Service]
+EnvironmentFile=-/etc/default/knx-exporter
+User=root
+Type=simple
+Restart=on-failure
+RestartSec=10
+ExecStart=/usr/bin/knx-exporter run --log_level $LOG_LEVEL -f $CONFIG_PATH -r $RESTART_POLICY -p $PORT
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+Alias=knx-exporter.service
+
+[Install]
+WantedBy=multi-user.target
+Alias=knx-exporter.service

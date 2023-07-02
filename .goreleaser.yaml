@@ -152,6 +152,42 @@ brews:
       bash_completion.install "completions/knx-exporter.bash" => "knx-exporter"
       zsh_completion.install "completions/knx-exporter.zsh" => "_knx-exporter"
       fish_completion.install "completions/knx-exporter.fish"
+nfpms:
+  - package_name: knx-exporter
+    file_name_template: "{{ .ConventionalFileName }}"
+    builds:
+      - knx-exporter
+    vendor: chr-fritz
+    homepage: https://github.com/chr-fritz/knx-exporter
+    maintainer: chr-fritz<chr-fritz@users.noreply.github.com>
+    license: Apache 2.0
+    formats:
+      - deb
+    bindir: /usr/bin
+    contents:
+      # Config
+      - src: scripts/defaultGaConfig.yaml
+        dst: /etc/knx-exporter/ga-config.yaml
+        type: "config|noreplace"
+      # systemd
+      - src: scripts/systemd/knx-exporter.service
+        dst: /etc/systemd/system/knx-exporter.service
+      - src: scripts/systemd/knx-exporter.env
+        dst: /etc/default/knx-exporter
+        type: "config|noreplace"
+      - src: scripts/knx-exporter_not_to_be_run
+        dst: /etc/knx-exporter/knx-exporter_not_to_be_run
+        type: "config|noreplace"
+      # Completion
+      - src: completions/knx-exporter.bash
+        dst: /usr/share/bash-completion/completions/knx-exporter
+      - src: completions/knx-exporter.fish
+        dst: /usr/share/fish/vendor_completions.d/knx-exporter
+      - src: completions/knx-exporter.zsh
+        dst: /usr/share/zsh/vendor-completions/_knx-exporter
+    scripts:
+      postinstall: "scripts/postinstall.sh"
+      preremove: "scripts/preremove.sh"
 archives:
   - files:
       - README.md
