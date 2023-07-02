@@ -159,7 +159,7 @@ Next it defines the actual information for a single group address:
   [prometheus metrics names](https://prometheus.io/docs/practices/naming/#metric-names).
 - `DPT` The knx data point type. This defines how the KNX Prometheus Exporter will interpret the
   payload of received telegrams. All available data point types can be found here:
-  [knx dpt](https://pkg.go.dev/github.com/vapourismo/knx-go@v0.0.0-20201122213738-75fe09ace330/knx/dpt)
+  [knx dpt](https://pkg.go.dev/github.com/vapourismo/knx-go@v0.0.0-20230307194121-5fc424ba6886/knx/dpt)
 - `Export` Can be either `true` or `false`. Allows to disable exporting the group address as value.
 - `MetricType` defines the type of the exported metric. Can be either `counter` or `gauge`. See
   [Prometheus documentation counter vs. gauge](https://prometheus.io/docs/practices/instrumentation/#counter-vs-gauge-summary-vs-histogram)
