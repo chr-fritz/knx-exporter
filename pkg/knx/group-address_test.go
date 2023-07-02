@@ -94,7 +94,7 @@ func TestGroupAddress_UnmarshalJSON(t *testing.T) {
 		want    GroupAddress
 		wantErr bool
 	}{
-		{"0/0/0", []byte("0/0/0"), GroupAddress(0), false},
+		{"0/0/0", []byte("0/0/0"), GroupAddress(0), true},
 		{"0/0/1", []byte("0/0/1"), GroupAddress(1), false},
 		{"0/1/0", []byte("0/1/0"), GroupAddress(0x100), false},
 		{"31/7/0", []byte("31/7/0"), GroupAddress(0xFF00), false},
@@ -119,7 +119,7 @@ func TestGroupAddress_UnmarshalText(t *testing.T) {
 		want    GroupAddress
 		wantErr bool
 	}{
-		{"0/0/0", []byte("0/0/0"), GroupAddress(0), false},
+		{"0/0/0", []byte("0/0/0"), GroupAddress(0), true},
 		{"0/0/1", []byte("0/0/1"), GroupAddress(1), false},
 		{"0/1/0", []byte("0/1/0"), GroupAddress(0x100), false},
 		{"31/7/0", []byte("31/7/0"), GroupAddress(0xFF00), false},
@@ -143,7 +143,7 @@ func TestNewGroupAddress(t *testing.T) {
 		want    GroupAddress
 		wantErr bool
 	}{
-		{"0/0/0", GroupAddress(0), false},
+		{"0/0/0", GroupAddress(0), true},
 		{"0/0/1", GroupAddress(1), false},
 		{"0/0/1", GroupAddress(1), false},
 		{"0/1/0", GroupAddress(0x100), false},

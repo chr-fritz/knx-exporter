@@ -94,7 +94,7 @@ func TestPhysicalAddress_UnmarshalJSON(t *testing.T) {
 		want    PhysicalAddress
 		wantErr bool
 	}{
-		{"0.0.0", []byte("0.0.0"), PhysicalAddress(0), false},
+		{"0.0.0", []byte("0.0.0"), PhysicalAddress(0), true},
 		{"0.0.1", []byte("0.0.1"), PhysicalAddress(1), false},
 		{"0.1.0", []byte("0.1.0"), PhysicalAddress(0x100), false},
 		{"15.15.0", []byte("15.15.0"), PhysicalAddress(0xFF00), false},
@@ -119,7 +119,7 @@ func TestPhysicalAddress_UnmarshalText(t *testing.T) {
 		want    PhysicalAddress
 		wantErr bool
 	}{
-		{"0.0.0", []byte("0.0.0"), PhysicalAddress(0), false},
+		{"0.0.0", []byte("0.0.0"), PhysicalAddress(0), true},
 		{"0.0.1", []byte("0.0.1"), PhysicalAddress(1), false},
 		{"0.1.0", []byte("0.1.0"), PhysicalAddress(0x100), false},
 		{"15.15.0", []byte("15.15.0"), PhysicalAddress(0xFF00), false},
@@ -143,7 +143,7 @@ func TestNewPhysicalAddress(t *testing.T) {
 		want    PhysicalAddress
 		wantErr bool
 	}{
-		{"0.0.0", PhysicalAddress(0), false},
+		{"0.0.0", PhysicalAddress(0), true},
 		{"0.0.1", PhysicalAddress(1), false},
 		{"0.0.1", PhysicalAddress(1), false},
 		{"0.1.0", PhysicalAddress(0x100), false},
