@@ -31,6 +31,8 @@ type Config struct {
 	// MetricsPrefix is a short prefix which will be added in front of the actual metric name.
 	MetricsPrefix  string
 	AddressConfigs GroupAddressConfigSet
+	// ReadStartupInterval is the intervall to wait between read of group addresses after startup.
+	ReadStartupInterval Duration `json:",omitempty"`
 }
 
 // ReadConfig reads the given configuration file and returns the parsed Config object.
@@ -127,6 +129,8 @@ type GroupAddressConfig struct {
 	MetricType string
 	// Export the metric to prometheus
 	Export bool
+	// ReadStartup allows the exporter to actively send `GroupValueRead` telegrams to actively read the value at startup instead waiting for it.
+	ReadStartup bool `json:",omitempty"`
 	// ReadActive allows the exporter to actively send `GroupValueRead` telegrams to actively poll the value instead waiting for it.
 	ReadActive bool `json:",omitempty"`
 	// MaxAge of a value until it will actively send a `GroupValueRead` telegram to read the value if ReadActive is set to true.
