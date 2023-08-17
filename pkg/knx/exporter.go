@@ -100,7 +100,9 @@ func (e *metricsExporter) IsAlive() error {
 func (e *metricsExporter) createClient() error {
 	switch e.config.Connection.Type {
 	case Tunnel:
-		logrus.Infof("Connect to %s using tunneling", e.config.Connection.Endpoint)
+		logrus.WithField("endpoint", e.config.Connection.Endpoint).
+			WithField("connection_type", "tunnel").
+			Infof("Connect to %s using tunneling", e.config.Connection.Endpoint)
 		tunnel, err := knx.NewGroupTunnel(e.config.Connection.Endpoint, knx.DefaultTunnelConfig)
 		if err != nil {
 			return err
@@ -108,7 +110,9 @@ func (e *metricsExporter) createClient() error {
 		e.client = &tunnel
 		return nil
 	case Router:
-		logrus.Infof("Connect to %s using multicast routing", e.config.Connection.Endpoint)
+		logrus.WithField("endpoint", e.config.Connection.Endpoint).
+			WithField("connection_type", "routing").
+			Infof("Connect to %s using multicast routing", e.config.Connection.Endpoint)
 		router, err := knx.NewGroupRouter(e.config.Connection.Endpoint, knx.DefaultRouterConfig)
 		if err != nil {
 			return err

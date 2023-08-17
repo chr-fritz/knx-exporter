@@ -108,7 +108,10 @@ func (m *metricSnapshots) AddSnapshot(s *Snapshot) {
 		meta = snapshot{snapshot: s, metric: metric}
 		err = m.registerer.Register(meta.metric)
 		if err != nil && !errors.Is(err, prometheus.AlreadyRegisteredError{}) {
-			logrus.Warnf("Can not register new metric %s from %s: %s", s.name, s.source.String(), err)
+			logrus.
+				WithField("metricName", s.name).
+				WithField("source", s.source).
+				Warnf("Can not register new metric %s from %s: %s", s.name, s.source.String(), err)
 		}
 	}
 	m.snapshots[key] = meta
