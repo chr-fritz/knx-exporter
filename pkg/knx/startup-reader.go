@@ -47,7 +47,7 @@ func (s *startupReader) Run() {
 	logrus.Infof("start reading addresses after startup in %dms intervals.", readInterval.Milliseconds())
 	s.ticker = time.NewTicker(readInterval)
 	c := s.ticker.C
-	go func(s *startupReader) {
+	go func() {
 		addressesToRead := reflect.ValueOf(s.metricsToRead).MapKeys()
 		for range c {
 			if len(addressesToRead) == 0 {
@@ -58,7 +58,7 @@ func (s *startupReader) Run() {
 			addressesToRead = addressesToRead[1:]
 		}
 		s.ticker.Stop()
-	}(s)
+	}()
 }
 
 func (s *startupReader) Close() {
