@@ -42,7 +42,7 @@ func NewStartupReader(config *Config, client GroupClient, metricsHandler MetricS
 func (s *startupReader) Run() {
 	readInterval := time.Duration(s.config.ReadStartupInterval)
 	if readInterval.Milliseconds() <= 0 {
-		readInterval = time.Duration(200 * time.Millisecond)
+		readInterval = 200 * time.Millisecond
 	}
 	logrus.Infof("start reading addresses after startup in %dms intervals.", readInterval.Milliseconds())
 	s.ticker = time.NewTicker(readInterval)
