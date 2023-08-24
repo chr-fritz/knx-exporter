@@ -17,7 +17,7 @@ package knx
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -37,7 +37,7 @@ type Config struct {
 
 // ReadConfig reads the given configuration file and returns the parsed Config object.
 func ReadConfig(configFile string) (*Config, error) {
-	content, err := ioutil.ReadFile(configFile)
+	content, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("can not read group address configuration: %s", err)
 	}

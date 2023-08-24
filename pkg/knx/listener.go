@@ -70,26 +70,42 @@ func (l *listener) handleEvent(event knx.GroupEvent) {
 
 	addr, ok := l.config.AddressConfigs[destination]
 	if !ok {
-		logrus.Tracef("Got ignored %s telegram from %s for %s.",
-			event.Command.String(),
-			event.Source.String(),
-			event.Destination.String())
+		logrus.
+			WithFields(logrus.Fields{
+				"command":     event.Command.String(),
+				"source":      event.Source.String(),
+				"destination": event.Destination.String(),
+			}).
+			Tracef("Got ignored %s telegram from %s for %s.",
+				event.Command.String(),
+				event.Source.String(),
+				event.Destination.String())
 		return
 	}
 
 	value, err := unpackEvent(event, addr)
+	messageLogFields := logrus.Fields{
+		"dpt":         addr.DPT,
+		"command":     event.Command.String(),
+		"source":      event.Source.String(),
+		"destination": event.Destination.String(),
+	}
 	if err != nil {
-		logrus.Warn(err)
+		logrus.WithFields(messageLogFields).
+			Warn(err)
 		return
 	}
 
 	floatValue, err := extractAsFloat64(value)
 	if err != nil {
-		logrus.Warn(err)
+		logrus.WithFields(messageLogFields).
+			Warn(err)
 		return
 	}
 	metricName := l.config.NameFor(addr)
-	logrus.Tracef("Processed value %s for %s on group address %s", value.String(), metricName, destination)
+	logrus.WithFields(messageLogFields).
+		WithField("metricName", metricName).
+		Tracef("Processed value %s for %s on group address %s", value.String(), metricName, destination)
 	l.metricsChan <- &Snapshot{
 		name:        metricName,
 		value:       floatValue,

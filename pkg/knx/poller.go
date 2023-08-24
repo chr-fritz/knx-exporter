@@ -80,7 +80,8 @@ func (p *poller) pollAddresses(t time.Time) {
 	for address, config := range p.metricsToPoll {
 		s := p.snapshotHandler.FindYoungestSnapshot(config.Name)
 		if s == nil {
-			logrus.Tracef("Initial poll of %s", address.String())
+			logrus.WithField("address", address).
+				Tracef("Initial poll of %s", address.String())
 			p.sendReadMessage(address)
 			continue
 		}
@@ -88,10 +89,13 @@ func (p *poller) pollAddresses(t time.Time) {
 		diff := t.Sub(s.timestamp).Round(time.Second)
 		maxAge := time.Duration(config.MaxAge)
 		if diff >= maxAge {
-			logrus.Tracef("Poll %s for new value as it is already %s old but max age is %s only",
-				address.String(),
-				diff.String(),
-				maxAge.String())
+			logrus.WithField("address", address).
+				WithField("diff", diff).
+				WithField("maxAge", maxAge).
+				Tracef("Poll %s for new value as it is already %s old but max age is %s only",
+					address.String(),
+					diff.String(),
+					maxAge.String())
 			p.sendReadMessage(address)
 		}
 	}
@@ -105,7 +109,8 @@ func (p *poller) sendReadMessage(address GroupAddress) {
 	}
 
 	if e := p.client.Send(event); e != nil {
-		logrus.Infof("can not send read request for %s: %s", address.String(), e)
+		logrus.WithField("address", address.String()).
+			Infof("can not send read request for %s: %s", address.String(), e)
 	}
 	p.messageCounter.WithLabelValues("sent", "true").Inc()
 }

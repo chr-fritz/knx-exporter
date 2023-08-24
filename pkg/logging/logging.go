@@ -15,6 +15,8 @@
 package logging
 
 import (
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -25,8 +27,9 @@ type LoggerConfiguration interface {
 }
 
 type loggerConfig struct {
-	flagSet *pflag.FlagSet
-	level   string
+	flagSet       *pflag.FlagSet
+	level         string
+	formatterName string
 }
 
 func InitFlags(flagset *pflag.FlagSet, cmd *cobra.Command) LoggerConfiguration {
@@ -37,12 +40,21 @@ func InitFlags(flagset *pflag.FlagSet, cmd *cobra.Command) LoggerConfiguration {
 		flagSet: flagset,
 	}
 
-	flagName := "log_level"
-	flagset.StringVarP(&config.level, flagName, "v", "info", "The minimum log level to print the messages")
+	logLevelFlagName := "log_level"
+	logFormatterFlagName := "log_format"
+	flagset.StringVarP(&config.level, logLevelFlagName, "v", "info", "The minimum log level to print the messages.")
+	flagset.StringVarP(&config.formatterName, logFormatterFlagName, "", "text", "The format how to print the log messages.")
 
 	if cmd != nil {
-		if e := cmd.RegisterFlagCompletionFunc(flagName, flagCompletion); e != nil {
+		if e := cmd.RegisterFlagCompletionFunc(logLevelFlagName, flagCompletion); e != nil {
 			logrus.Warn("can not register flag completion for log_level: ", e)
+		}
+
+		e := cmd.RegisterFlagCompletionFunc(logFormatterFlagName, func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+			return []string{"text", "json"}, cobra.ShellCompDirectiveDefault
+		})
+		if e != nil {
+			logrus.Warn("can not register flag completion for log formatter: ", e)
 		}
 	}
 
@@ -54,6 +66,7 @@ func flagCompletion(_ *cobra.Command, _ []string, _ string) ([]string, cobra.She
 }
 
 func (lc *loggerConfig) Initialize() {
+	lc.setFormatter()
 	e := lc.setLevel()
 
 	if e != nil {
@@ -68,4 +81,17 @@ func (lc *loggerConfig) setLevel() error {
 	}
 	logrus.SetLevel(level)
 	return nil
+}
+func (lc *loggerConfig) setFormatter() {
+	var formatter logrus.Formatter
+	switch strings.ToLower(lc.formatterName) {
+	case "json":
+		formatter = &logrus.JSONFormatter{}
+	case "text":
+		formatter = &logrus.TextFormatter{}
+	default:
+		formatter = &logrus.TextFormatter{}
+	}
+
+	logrus.SetFormatter(formatter)
 }

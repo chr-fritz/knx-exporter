@@ -230,10 +230,22 @@ recommended in enviroments like Kubernetes. They are reachable under `/live` and
 6. Push to the branch (`git push origin my-new-feature`)
 7. Create new pull request
 
+### Renamed branch to `main`
+
+The name of default branch recently changed from `master` to `main`. If you have a local working
+copy of this repository you can rename it using the following commands:
+
+```shell
+git branch -m master main
+git fetch origin
+git branch -u origin/main main
+git remote set-head origin -a
+```
+
 ## License
 
 The KNX Exporter is released under the Apache 2.0 license. See
-[LICENSE](https://github.com/chr-fritz/knx-exporter/blob/master/LICENSE)
+[LICENSE](https://github.com/chr-fritz/knx-exporter/blob/main/LICENSE)
 
 ## Maintainer
 
