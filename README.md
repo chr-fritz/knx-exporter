@@ -174,8 +174,8 @@ Next it defines the actual information for a single group address:
   [Prometheus documentation counter vs. gauge](https://prometheus.io/docs/practices/instrumentation/#counter-vs-gauge-summary-vs-histogram)
   for more information about it.
 - `ReadStartup` can either be `true` or `false`. If set to `true` the KNX Prometheus Exporter will
-  send a `GroupValueRead` telegram to the group address to active ask for a new value once after startup.
-  In contrast to `ReadActive` this sends out a `GroupValueRead` telegram at startuo once.
+  send a `GroupValueRead` telegram to the group address to actively ask for a new value once after startup.
+  In contrast to `ReadActive` this sends out a `GroupValueRead` telegram at startup once.
 - `ReadActive` can either be `true` or `false`. If set to `true` the KNX Prometheus Exporter will
   send a `GroupValueRead` telegram to the group address to active ask for a new value if the last
   received value is older than `MaxAge`.
