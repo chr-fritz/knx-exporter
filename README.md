@@ -92,12 +92,14 @@ Connection:
     Endpoint: "192.168.1.15:3671"
     PhysicalAddress: 2.0.1
 MetricsPrefix: knx_
+ReadStartupInterval: 200ms
 AddressConfigs:
     0/0/1:
         Name: dummy_metric
         DPT: 1.*
         Export: true
         MetricType: "counter"
+        ReadStartup: true
         ReadActive: true
         MaxAge: 10m
         Comment: dummy comment
@@ -125,6 +127,12 @@ The `MetricsPrefix` defines a single string that will be added to all your expor
 format must be compliant with the
 [prometheus metrics names](https://prometheus.io/docs/practices/naming/#metric-names).
 
+#### The `ReadStartupInterval`
+It is possible to send `GroupValueRead` telegrams to specific group addresses at startup.
+Sending out all `GroupValueRead` telegrams at once on startup can overwhelm the KNX bus.
+The `ReadStartupInterval` defines the interval between the `GroupValueRead` telegrams sent out at startup.
+If not specified, `ReadStartupInterval` is set to 200ms by default.
+
 #### The `AddressConfigs` section
 
 The `AddressConfigs` section defines all the information about the group addresses which should be
@@ -136,6 +144,7 @@ exported to prometheus. It contains the following structure for every exported g
       DPT: 1.*
       Export: true
       MetricType: "counter"
+      ReadStartup: true
       ReadActive: true
       MaxAge: 10m
       Comment: dummy comment
@@ -164,6 +173,9 @@ Next it defines the actual information for a single group address:
 - `MetricType` defines the type of the exported metric. Can be either `counter` or `gauge`. See
   [Prometheus documentation counter vs. gauge](https://prometheus.io/docs/practices/instrumentation/#counter-vs-gauge-summary-vs-histogram)
   for more information about it.
+- `ReadStartup` can either be `true` or `false`. If set to `true` the KNX Prometheus Exporter will
+  send a `GroupValueRead` telegram to the group address to active ask for a new value once after startup.
+  In contrast to `ReadActive` this sends out a `GroupValueRead` telegram at startuo once.
 - `ReadActive` can either be `true` or `false`. If set to `true` the KNX Prometheus Exporter will
   send a `GroupValueRead` telegram to the group address to active ask for a new value if the last
   received value is older than `MaxAge`.
