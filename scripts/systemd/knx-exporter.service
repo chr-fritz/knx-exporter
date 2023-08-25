@@ -8,7 +8,7 @@ User=root
 Type=simple
 Restart=on-failure
 RestartSec=10
-ExecStart=/usr/bin/knx-exporter run --log_level $LOG_LEVEL -f $CONFIG_PATH -r $RESTART_POLICY -p $PORT
+ExecStart=/usr/bin/knx-exporter run --log_level $LOG_LEVEL --log_format $LOG_FORMAT -f $CONFIG_PATH -r $RESTART_POLICY -p $PORT
 KillMode=process
 
 [Install]
