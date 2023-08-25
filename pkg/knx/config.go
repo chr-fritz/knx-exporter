@@ -17,11 +17,13 @@ package knx
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/vapourismo/knx-go/knx"
 )
 
 // Config defines the structure of the configuration file which defines which
@@ -41,7 +43,22 @@ func ReadConfig(configFile string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can not read group address configuration: %s", err)
 	}
-	config := Config{}
+	config := Config{
+		Connection: Connection{
+			RouterConfig: RouterConfig{
+				RetainCount:              32,
+				MulticastLoopbackEnabled: false,
+				PostSendPauseDuration:    20 * time.Millisecond,
+			},
+			TunnelConfig: TunnelConfig{
+				ResendInterval:    500 * time.Millisecond,
+				HeartbeatInterval: 10 * time.Second,
+				ResponseTimeout:   10 * time.Second,
+				SendLocalAddress:  false,
+				UseTCP:            false,
+			},
+		},
+	}
 	err = yaml.Unmarshal(content, &config)
 	if err != nil {
 		return nil, fmt.Errorf("can not read config file %s: %s", configFile, err)
@@ -71,6 +88,69 @@ type Connection struct {
 	Endpoint string
 	// PhysicalAddress defines how the knx-exporter should identify itself within the KNX system.
 	PhysicalAddress PhysicalAddress
+	// RouterConfiguration contains some specific configurations if Type is Router
+	RouterConfig RouterConfig
+	// TunnelConfiguration contains some specific configurations if Type is Tunnel
+	TunnelConfig TunnelConfig
+}
+
+type RouterConfig struct {
+	// Specify how many sent messages to retain. This is important for when a router indicates that
+	// it has lost some messages. If you do not expect to saturate the router, keep this low.
+	RetainCount uint
+	// Specifies the interface used to send and receive KNXnet/IP packets. If the interface
+	// is nil, the system-assigned multicast interface is used.
+	Interface string
+	// Specifies if Multicast Loopback should be enabled.
+	MulticastLoopbackEnabled bool
+	// Pause duration after sending. 0 means disabled.
+	// According to the specification, we may choose to always pause for 20 ms // after transmitting,
+	// but we should always pause for at least 5 ms on a multicast address.
+	PostSendPauseDuration time.Duration
+}
+
+func (rc RouterConfig) toKnxRouterConfig() (knx.RouterConfig, error) {
+	var iface *net.Interface = nil
+	if strings.Trim(rc.Interface, "\n\r\t ") != "" {
+		var err error
+		iface, err = net.InterfaceByName(rc.Interface)
+		if err != nil {
+			return knx.RouterConfig{}, err
+		}
+	}
+	return knx.RouterConfig{
+		RetainCount:              rc.RetainCount,
+		Interface:                iface,
+		MulticastLoopbackEnabled: rc.MulticastLoopbackEnabled,
+		PostSendPauseDuration:    rc.PostSendPauseDuration,
+	}, nil
+}
+
+type TunnelConfig struct {
+	// ResendInterval is the interval with which requests will be resend if no response is received.
+	ResendInterval time.Duration
+
+	// HeartbeatInterval specifies the time interval which triggers a heartbeat check.
+	HeartbeatInterval time.Duration
+
+	// ResponseTimeout specifies how long to wait for a response.
+	ResponseTimeout time.Duration
+
+	// SendLocalAddress specifies if local address should be sent on connection request.
+	SendLocalAddress bool
+
+	// UseTCP configures whether to connect to the gateway using TCP.
+	UseTCP bool
+}
+
+func (tc TunnelConfig) toKnxTunnelConfig() knx.TunnelConfig {
+	return knx.TunnelConfig{
+		ResendInterval:    tc.ResendInterval,
+		HeartbeatInterval: tc.HeartbeatInterval,
+		ResponseTimeout:   tc.ResponseTimeout,
+		SendLocalAddress:  tc.SendLocalAddress,
+		UseTCP:            tc.UseTCP,
+	}
 }
 
 type ConnectionType string

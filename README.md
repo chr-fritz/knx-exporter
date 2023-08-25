@@ -120,6 +120,9 @@ KNX Prometheus Exporter will identify itself within it. It has three properties:
   be `224.0.23.12:3671`.
 - `PhysicalAddress` This defines the physical address how the KNX Prometheus Exporter will identify
   itself within your KNX address.
+- `RouterConfig` This defines additional
+- `TunnelConfig` contains some specific configurations if Type is Tunnel
+
 
 #### The `MetricsPrefix`
 

@@ -15,10 +15,13 @@
 package knx
 
 import (
+	"fmt"
+	"net"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/cemi"
 )
 
@@ -35,6 +38,18 @@ func TestReadConfig(t *testing.T) {
 				Type:            Tunnel,
 				Endpoint:        "192.168.1.15:3671",
 				PhysicalAddress: PhysicalAddress(cemi.NewIndividualAddr3(2, 0, 1)),
+				RouterConfig: RouterConfig{
+					RetainCount:              32,
+					MulticastLoopbackEnabled: false,
+					PostSendPauseDuration:    20 * time.Millisecond,
+				},
+				TunnelConfig: TunnelConfig{
+					ResendInterval:    500 * time.Millisecond,
+					HeartbeatInterval: 10 * time.Second,
+					ResponseTimeout:   10 * time.Second,
+					SendLocalAddress:  false,
+					UseTCP:            false,
+				},
 			},
 			MetricsPrefix: "knx_",
 			AddressConfigs: map[GroupAddress]GroupAddressConfig{
@@ -81,6 +96,102 @@ func TestConfig_NameForGa(t *testing.T) {
 			}
 			got := c.NameForGa(tt.address)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestTunnelConfig_toKnxTunnelConfig(t *testing.T) {
+	tests := []struct {
+		name              string
+		ResendInterval    time.Duration
+		HeartbeatInterval time.Duration
+		ResponseTimeout   time.Duration
+		SendLocalAddress  bool
+		UseTCP            bool
+		want              knx.TunnelConfig
+	}{
+		{"default config",
+			500 * time.Millisecond,
+			10 * time.Second,
+			10 * time.Second,
+			false,
+			false,
+			knx.DefaultTunnelConfig,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tc := TunnelConfig{
+				ResendInterval:    tt.ResendInterval,
+				HeartbeatInterval: tt.HeartbeatInterval,
+				ResponseTimeout:   tt.ResponseTimeout,
+				SendLocalAddress:  tt.SendLocalAddress,
+				UseTCP:            tt.UseTCP,
+			}
+			assert.Equalf(t, tt.want, tc.toKnxTunnelConfig(), "toKnxTunnelConfig()")
+		})
+	}
+}
+
+func TestRouterConfig_toKnxRouterConfig(t *testing.T) {
+	iface, err := net.InterfaceByIndex(1)
+	assert.NoError(t, err)
+	tests := []struct {
+		name                     string
+		RetainCount              uint
+		Interface                string
+		MulticastLoopbackEnabled bool
+		PostSendPauseDuration    time.Duration
+		want                     knx.RouterConfig
+		wantErr                  assert.ErrorAssertionFunc
+	}{
+		{
+			"default config",
+			32,
+			"",
+			false,
+			20 * time.Millisecond,
+			knx.DefaultRouterConfig,
+			assert.NoError,
+		},
+		{
+			"wrong interface",
+			32,
+			"non existing interface",
+			false,
+			20 * time.Millisecond,
+			knx.RouterConfig{},
+			func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NotNil(t, err, i)
+			},
+		},
+		{
+			"local interface",
+			32,
+			iface.Name,
+			false,
+			20 * time.Millisecond,
+			knx.RouterConfig{
+				RetainCount:           32,
+				Interface:             iface,
+				PostSendPauseDuration: 20 * time.Millisecond,
+			},
+			assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rc := RouterConfig{
+				RetainCount:              tt.RetainCount,
+				Interface:                tt.Interface,
+				MulticastLoopbackEnabled: tt.MulticastLoopbackEnabled,
+				PostSendPauseDuration:    tt.PostSendPauseDuration,
+			}
+			got, err := rc.toKnxRouterConfig()
+			if !tt.wantErr(t, err, fmt.Sprintf("toKnxRouterConfig()")) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "toKnxRouterConfig()")
 		})
 	}
 }

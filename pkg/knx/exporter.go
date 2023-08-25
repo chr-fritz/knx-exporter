@@ -109,8 +109,9 @@ func (e *metricsExporter) createClient() error {
 	case Tunnel:
 		logrus.WithField("endpoint", e.config.Connection.Endpoint).
 			WithField("connection_type", "tunnel").
+			WithField("useTcp", e.config.Connection.TunnelConfig.UseTCP).
 			Infof("Connect to %s using tunneling", e.config.Connection.Endpoint)
-		tunnel, err := knx.NewGroupTunnel(e.config.Connection.Endpoint, knx.DefaultTunnelConfig)
+		tunnel, err := knx.NewGroupTunnel(e.config.Connection.Endpoint, e.config.Connection.TunnelConfig.toKnxTunnelConfig())
 		if err != nil {
 			return err
 		}
@@ -120,7 +121,13 @@ func (e *metricsExporter) createClient() error {
 		logrus.WithField("endpoint", e.config.Connection.Endpoint).
 			WithField("connection_type", "routing").
 			Infof("Connect to %s using multicast routing", e.config.Connection.Endpoint)
-		router, err := knx.NewGroupRouter(e.config.Connection.Endpoint, knx.DefaultRouterConfig)
+
+		config, err := e.config.Connection.RouterConfig.toKnxRouterConfig()
+		if err != nil {
+			return fmt.Errorf("unable to convert router config: %s", err)
+		}
+
+		router, err := knx.NewGroupRouter(e.config.Connection.Endpoint, config)
 		if err != nil {
 			return err
 		}

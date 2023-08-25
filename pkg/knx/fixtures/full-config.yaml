@@ -2,6 +2,17 @@ Connection:
   Type: "Tunnel"
   Endpoint: "192.168.1.15:3671"
   PhysicalAddress: 2.0.1
+  RouterConfig:
+    Interface: ""
+    MulticastLoopbackEnabled: false
+    PostSendPauseDuration: 20000000
+    RetainCount: 32
+  TunnelConfig:
+    HeartbeatInterval: 10000000000
+    ResendInterval: 500000000
+    ResponseTimeout: 10000000000
+    SendLocalAddress: false
+    UseTCP: false
 MetricsPrefix: knx_
 AddressConfigs:
   0/0/1:

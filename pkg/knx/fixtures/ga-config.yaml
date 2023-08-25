@@ -2,6 +2,17 @@ Connection:
   Endpoint: ""
   Type: ""
   PhysicalAddress: 0.0.0
+  RouterConfig:
+    Interface: ""
+    MulticastLoopbackEnabled: false
+    PostSendPauseDuration: 0
+    RetainCount: 0
+  TunnelConfig:
+    HeartbeatInterval: 0
+    ResendInterval: 0
+    ResponseTimeout: 0
+    SendLocalAddress: false
+    UseTCP: false
 MetricsPrefix: knx_
 AddressConfigs:
   0/0/1:
