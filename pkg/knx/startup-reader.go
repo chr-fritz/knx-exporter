@@ -75,7 +75,8 @@ func (s *startupReader) sendReadMessage(address GroupAddress) {
 	}
 
 	if e := s.client.Send(event); e != nil {
-		logrus.Errorf("can not send read request for %s: %s", address.String(), e)
+		logrus.WithField("address", address).
+			Errorf("can not send read request for %s: %s", address.String(), e)
 	}
 	s.messageCounter.WithLabelValues("sent", "true").Inc()
 }

@@ -102,7 +102,9 @@ func (m *metricSnapshots) AddSnapshot(s *Snapshot) {
 	} else {
 		metric, err := createMetric(s, m.GetValueFunc(key))
 		if err != nil {
-			logrus.Warn(err)
+			logrus.WithField("metricName", s.name).
+				WithField("source", s.source).
+				Warn(err)
 			return
 		}
 		meta = snapshot{snapshot: s, metric: metric}

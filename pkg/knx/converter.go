@@ -93,19 +93,20 @@ func collectGroupAddresses(groupRange []export.GroupRange) []export.GroupAddress
 func convertAddresses(groupAddresses []export.GroupAddress) map[GroupAddress]GroupAddressConfig {
 	addressConfigs := make(map[GroupAddress]GroupAddressConfig)
 	for _, ga := range groupAddresses {
+		logger := logrus.WithField("address", ga.Address)
 		address, err := NewGroupAddress(ga.Address)
 		if err != nil {
-			logrus.Warnf("Can not convert address '%s': %s", ga.Address, err)
+			logger.Warnf("Can not convert address '%s': %s", ga.Address, err)
 			continue
 		}
 
 		name, err := normalizeMetricName(ga.Name)
 		if err != nil {
-			logrus.Info("Can not normalize group address name, ", err)
+			logger.Info("Can not normalize group address name, ", err)
 		}
 		dpt, err := normalizeDPTs(ga.DPTs)
 		if err != nil {
-			logrus.Info("Can not normalize data type, ", err)
+			logger.Info("Can not normalize data type, ", err)
 		}
 		cfg := GroupAddressConfig{
 			Name:       name,
