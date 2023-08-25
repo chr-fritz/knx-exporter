@@ -175,9 +175,6 @@ nfpms:
       - src: scripts/systemd/knx-exporter.env
         dst: /etc/default/knx-exporter
         type: "config|noreplace"
-      - src: scripts/knx-exporter_not_to_be_run
-        dst: /etc/knx-exporter/knx-exporter_not_to_be_run
-        type: "config|noreplace"
       # Completion
       - src: completions/knx-exporter.bash
         dst: /usr/share/bash-completion/completions/knx-exporter
