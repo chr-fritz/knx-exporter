@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -33,9 +32,11 @@ func TestRunConvertGaCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpFile, err := ioutil.TempFile("", "")
+			tmpFile, err := os.CreateTemp("", "")
 			assert.NoError(t, err)
-			defer os.Remove(tmpFile.Name())
+			defer func() {
+				_ = os.Remove(tmpFile.Name())
+			}()
 			cmd := NewConvertGaCommand()
 
 			if err := cmd.RunE(nil, []string{tt.src, tmpFile.Name()}); (err != nil) != tt.wantErr {

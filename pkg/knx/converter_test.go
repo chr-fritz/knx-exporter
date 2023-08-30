@@ -15,7 +15,6 @@
 package knx
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -35,9 +34,11 @@ func TestConvertGroupAddresses(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpFile, err := ioutil.TempFile("", "")
+			tmpFile, err := os.CreateTemp("", "")
 			assert.NoError(t, err)
-			defer os.Remove(tmpFile.Name())
+			defer func() {
+				_ = os.Remove(tmpFile.Name())
+			}()
 
 			if err := ConvertGroupAddresses(tt.src, tmpFile.Name()); (err != nil) != tt.wantErr {
 				t.Errorf("ConvertGroupAddresses() error = %v, wantErr %v", err, tt.wantErr)
@@ -49,11 +50,11 @@ func TestConvertGroupAddresses(t *testing.T) {
 
 			assert.FileExists(t, tmpFile.Name())
 
-			expected, err := ioutil.ReadFile(tt.wantTarget)
+			expected, err := os.ReadFile(tt.wantTarget)
 			assert.NoError(t, err)
 			expected, err = yaml.YAMLToJSON(expected)
 			assert.NoError(t, err)
-			actual, err := ioutil.ReadFile(tmpFile.Name())
+			actual, err := os.ReadFile(tmpFile.Name())
 			assert.NoError(t, err)
 			actual, err = yaml.YAMLToJSON(actual)
 			assert.NoError(t, err)
