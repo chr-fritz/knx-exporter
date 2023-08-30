@@ -138,7 +138,7 @@ docker_manifests:
       - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64"
       - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm7"
 brews:
-  - tap:
+  - repository:
       owner: chr-fritz
       name: homebrew-tap
     commit_author:
