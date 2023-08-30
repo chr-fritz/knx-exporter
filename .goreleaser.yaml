@@ -1,4 +1,4 @@
-# Copyright © 2020-2022 Christian Fritz <mail@chr-fritz.de>
+# Copyright © 2020-2023 Christian Fritz <mail@chr-fritz.de>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ builds:
       - arm
       - arm64
     goarm:
-      - 7
+      - "7"
     ldflags:
       - -X 'github.com/chr-fritz/knx-exporter/version.Version={{.Version}}'
       - -X 'github.com/chr-fritz/knx-exporter/version.Revision={{.ShortCommit}}'
@@ -66,6 +66,7 @@ dockers:
       - "--platform=linux/amd64"
     extra_files:
       - pkg/.knx-exporter.yaml
+      - scripts/docker/etc_passwd
   - goos: linux
     goarch: arm64
     ids:
@@ -89,6 +90,7 @@ dockers:
       - "--platform=linux/arm64/v8"
     extra_files:
       - pkg/.knx-exporter.yaml
+      - scripts/docker/etc_passwd
   - goos: linux
     goarch: arm
     goarm: 7
@@ -113,6 +115,7 @@ dockers:
       - "--platform=linux/arm/v7"
     extra_files:
       - pkg/.knx-exporter.yaml
+      - scripts/docker/etc_passwd
 docker_manifests:
   - name_template: "quay.io/chrfritz/knx-exporter:latest"
     image_templates:

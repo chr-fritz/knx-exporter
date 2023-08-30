@@ -1,4 +1,4 @@
-# Copyright © 2020-2022 Christian Fritz <mail@chr-fritz.de>
+# Copyright © 2020-2023 Christian Fritz <mail@chr-fritz.de>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,12 @@
 # limitations under the License.
 
 FROM scratch
+COPY scripts/docker/etc_passwd /etc/passwd
 COPY knx-exporter /
 COPY pkg/.knx-exporter.yaml /etc/knx-exporter.yaml
 EXPOSE 8080/tcp
 EXPOSE 3671/udp
 VOLUME /etc/knx-exporter
+USER nonroot
 ENTRYPOINT ["/knx-exporter"]
 CMD ["run", "--config","/etc/knx-exporter.yaml"]
