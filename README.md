@@ -11,7 +11,7 @@ Prometheus. It takes the values either from cyclic sent `GroupValueWrite` telegr
 values itself using `GroupValueRead` telegrams.
 
 The data stored in prometheus can be visualized with [Grafana](https://grafana.com/). This could
-look like the this screenshot:
+look like this screenshot:
 ![Grafana Screenshot](grafana-screenshot.png)
 
 <!-- TOC -->
@@ -25,13 +25,17 @@ look like the this screenshot:
         * [Converting the ETS 5 Group Export to a configuration](#converting-the-ets-5-group-export-to-a-configuration)
         * [Preparing the configuration](#preparing-the-configuration)
             * [The `Connection` section](#the-connection-section)
+                * [The `RouterConfig`](#the-routerconfig)
+                * [The `TunnelConfig`](#the-tunnelconfig)
             * [The `MetricsPrefix`](#the-metricsprefix)
+            * [The `ReadStartupInterval`](#the-readstartupinterval)
             * [The `AddressConfigs` section](#the-addressconfigs-section)
         * [Running the exporter](#running-the-exporter)
         * [Running the exporter using docker](#running-the-exporter-using-docker)
     * [Exported metrics](#exported-metrics)
     * [Health Check Endpoints](#health-check-endpoints)
     * [Contributing](#contributing)
+        * [Renamed branch to `main`](#renamed-branch-to-main)
     * [License](#license)
     * [Maintainer](#maintainer)
 
@@ -123,6 +127,25 @@ KNX Prometheus Exporter will identify itself within it. It has three properties:
 - `RouterConfig` This defines additional
 - `TunnelConfig` contains some specific configurations if Type is Tunnel
 
+##### The `RouterConfig`
+
+- `RetainCount` specifies how many sent messages to retain. This is important for when a router
+  indicates that it has lost some messages. If you do not expect to saturate the router, keep this
+  low.
+- `Interface` specifies the name of the network interface used to send and receive KNXnet/IP
+  packets. If the interface is nil, the system-assigned multicast interface is used.
+- `MulticastLoopbackEnabled` specifies if Multicast Loopback should be enabled.
+- `PostSendPauseDuration` specifies the pause duration after sending. `0` means disabled. According
+  to the specification, we may choose to always pause for 20 ms after transmitting, but we should
+  always pause for at least 5 ms on a multicast address.
+
+##### The `TunnelConfig`
+
+- `ResendInterval` is the interval with which requests will be resent if no response is received.
+- `HeartbeatInterval` specifies the time interval which triggers a heartbeat check.
+- `ResponseTimeout` specifies how long to wait for a response.
+- `SendLocalAddress` specifies if local address should be sent on connection request.
+- `UseTCP` configures whether to connect to the gateway using TCP.
 
 #### The `MetricsPrefix`
 
@@ -131,10 +154,11 @@ format must be compliant with the
 [prometheus metrics names](https://prometheus.io/docs/practices/naming/#metric-names).
 
 #### The `ReadStartupInterval`
+
 It is possible to send `GroupValueRead` telegrams to specific group addresses at startup.
 Sending out all `GroupValueRead` telegrams at once on startup can overwhelm the KNX bus.
-The `ReadStartupInterval` defines the interval between the `GroupValueRead` telegrams sent out at startup.
-If not specified, `ReadStartupInterval` is set to 200ms by default.
+The `ReadStartupInterval` defines the interval between the `GroupValueRead` telegrams sent out at
+startup. If not specified, `ReadStartupInterval` is set to 200ms by default.
 
 #### The `AddressConfigs` section
 
@@ -163,7 +187,7 @@ three valid forms:
 - Free structure `123`
 
 You can find more information about the formatting of group addresses here:
-[cemi@v0.0 NewGroupAddrString](https://pkg.go.dev/github.com/vapourismo/knx-go/knx/cemi@v0.0.0-20201122213738-75fe09ace330#NewGroupAddrString)
+[cemi@v0.0 NewGroupAddrString](https://pkg.go.dev/github.com/vapourismo/knx-go/knx/cemi@v0.0.0-20230307194121-5fc424ba6886#NewGroupAddrString)
 
 Next it defines the actual information for a single group address:
 
@@ -177,8 +201,8 @@ Next it defines the actual information for a single group address:
   [Prometheus documentation counter vs. gauge](https://prometheus.io/docs/practices/instrumentation/#counter-vs-gauge-summary-vs-histogram)
   for more information about it.
 - `ReadStartup` can either be `true` or `false`. If set to `true` the KNX Prometheus Exporter will
-  send a `GroupValueRead` telegram to the group address to actively ask for a new value once after startup.
-  In contrast to `ReadActive` this sends out a `GroupValueRead` telegram at startup once.
+  send a `GroupValueRead` telegram to the group address to actively ask for a new value once after
+  startup. In contrast to `ReadActive` this sends out a `GroupValueRead` telegram at startup once.
 - `ReadActive` can either be `true` or `false`. If set to `true` the KNX Prometheus Exporter will
   send a `GroupValueRead` telegram to the group address to active ask for a new value if the last
   received value is older than `MaxAge`.

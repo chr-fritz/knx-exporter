@@ -88,24 +88,24 @@ type Connection struct {
 	Endpoint string
 	// PhysicalAddress defines how the knx-exporter should identify itself within the KNX system.
 	PhysicalAddress PhysicalAddress
-	// RouterConfiguration contains some specific configurations if Type is Router
+	// RouterConfig contains some the specific configurations if connection Type is Router
 	RouterConfig RouterConfig
-	// TunnelConfiguration contains some specific configurations if Type is Tunnel
+	// TunnelConfig contains some the specific configurations if connection Type is Tunnel
 	TunnelConfig TunnelConfig
 }
 
 type RouterConfig struct {
-	// Specify how many sent messages to retain. This is important for when a router indicates that
-	// it has lost some messages. If you do not expect to saturate the router, keep this low.
+	// RetainCount specifies how many sent messages to retain. This is important for when a router indicates that it has
+	// lost some messages. If you do not expect to saturate the router, keep this low.
 	RetainCount uint
-	// Specifies the interface used to send and receive KNXnet/IP packets. If the interface
-	// is nil, the system-assigned multicast interface is used.
+	// Interface specifies the network interface used to send and receive KNXnet/IP packets. If the interface is nil, the
+	// system-assigned multicast interface is used.
 	Interface string
-	// Specifies if Multicast Loopback should be enabled.
+	// MulticastLoopbackEnabled specifies if Multicast Loopback should be enabled.
 	MulticastLoopbackEnabled bool
-	// Pause duration after sending. 0 means disabled.
-	// According to the specification, we may choose to always pause for 20 ms // after transmitting,
-	// but we should always pause for at least 5 ms on a multicast address.
+	// PostSendPauseDuration specifies the pause duration after sending. 0 means disabled. According to the specification,
+	// we may choose to always pause for 20 ms after transmitting, but we should always pause for at least 5 ms on a
+	// multicast address.
 	PostSendPauseDuration time.Duration
 }
 
@@ -127,7 +127,7 @@ func (rc RouterConfig) toKnxRouterConfig() (knx.RouterConfig, error) {
 }
 
 type TunnelConfig struct {
-	// ResendInterval is the interval with which requests will be resend if no response is received.
+	// ResendInterval is the interval with which requests will be resent if no response is received.
 	ResendInterval time.Duration
 
 	// HeartbeatInterval specifies the time interval which triggers a heartbeat check.
