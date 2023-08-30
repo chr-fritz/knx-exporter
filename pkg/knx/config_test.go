@@ -15,7 +15,6 @@
 package knx
 
 import (
-	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -188,7 +187,7 @@ func TestRouterConfig_toKnxRouterConfig(t *testing.T) {
 				PostSendPauseDuration:    tt.PostSendPauseDuration,
 			}
 			got, err := rc.toKnxRouterConfig()
-			if !tt.wantErr(t, err, fmt.Sprintf("toKnxRouterConfig()")) {
+			if !tt.wantErr(t, err, "toKnxRouterConfig()") {
 				return
 			}
 			assert.Equalf(t, tt.want, got, "toKnxRouterConfig()")
