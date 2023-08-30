@@ -1,4 +1,4 @@
-// Copyright © 2020-2022 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2023 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 module github.com/chr-fritz/knx-exporter
 
-go 1.20
+go 1.21
 
 require (
 	github.com/coreos/go-systemd/v22 v22.5.0
