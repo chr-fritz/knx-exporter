@@ -10,7 +10,7 @@ The KNX Prometheus Exporter is a small bridge to export values measured by KNX s
 Prometheus. It takes the values either from cyclic sent `GroupValueWrite` telegrams and can request
 values itself using `GroupValueRead` telegrams.
 
-The data stored in prometheus can be visualized with [Grafana](https://grafana.com/). This could
+The data stored in Prometheus can be visualized with [Grafana](https://grafana.com/). This could
 look like this screenshot:
 ![Grafana Screenshot](grafana-screenshot.png)
 
@@ -72,7 +72,7 @@ starting point is to
 [export the group addresses](https://support.knx.org/hc/en-us/articles/115001825324-Group-Address-Export)
 from ETS 5 into the XML format and convert them.
 
-Please refer the KNX Documentation
+Please refer to the KNX Documentation
 "[Group Address & Export](https://support.knx.org/hc/en-us/articles/115001825324-Group-Address-Export)"
 for more information about how to export the group addresses to XML.
 
@@ -122,7 +122,7 @@ KNX Prometheus Exporter will identify itself within it. It has three properties:
 - `Endpoint` This defines the ip address or hostname including the port to where the KNX Prometheus
   Exporter should open the connection. In case of you are using `Router` in `Type` the default might
   be `224.0.23.12:3671`.
-- `PhysicalAddress` This defines the physical address how the KNX Prometheus Exporter will identify
+- `PhysicalAddress` This defines the physical address of how the KNX Prometheus Exporter will identify
   itself within your KNX address.
 - `RouterConfig` This defines additional
 - `TunnelConfig` contains some specific configurations if Type is Tunnel
@@ -163,7 +163,7 @@ startup. If not specified, `ReadStartupInterval` is set to 200ms by default.
 #### The `AddressConfigs` section
 
 The `AddressConfigs` section defines all the information about the group addresses which should be
-exported to prometheus. It contains the following structure for every exported group address.
+exported to Prometheus. It contains the following structure for every exported group address.
 
 ```yaml
   0/0/1:
@@ -179,7 +179,7 @@ exported to prometheus. It contains the following structure for every exported g
           room: office
 ```
 
-The first line `0/0/1` defines the group address which should be exported. It can be written in all
+The first line `0/0/1` defines the group address that should be exported. It can be written in all
 three valid forms:
 
 - Two layers: `0/1`
@@ -210,7 +210,7 @@ Next it defines the actual information for a single group address:
   `GroupValueRead` telegram to active request a new value for the group address. This setting will
   be ignored if `ReadActive` is set to `false`.
 - `Comment` a short comment for the group address. Will be also exported as comment within the
-  prometheus metrics.
+  Prometheus metrics.
 - `Labels` are additional information for a specific time series. A common usage of labels could be
   a label `room` which identifies the room for a metric `current_temperature`.
 
@@ -249,13 +249,13 @@ can be grouped into three groups:
     - sent messages `knx_messages{direction="sent",processed="true"}`.
 2. **HTTP Metrics:** Counts the processed number of successfully and failed http requests. All
    metrics starts with `promhttp_`.
-3. **GoLang Metrics:** These are metrics which indicates some health information about memory, cpu
+3. **GoLang Metrics:** These are metrics that indicate some health information about memory, cpu
    usage, threads and other GoLang internal information.
 
 ## Health Check Endpoints
 
 The KNX Prometheus Exporter provides endpoints for liveness and readiness checks like they were
-recommended in enviroments like Kubernetes. They are reachable under `/live` and `/ready`. With
+recommended in environments like Kubernetes. They are reachable under `/live` and `/ready`. With
 `/live?full=1` and `/ready?full=1` they also print the status of every single check.
 
 ## Contributing
