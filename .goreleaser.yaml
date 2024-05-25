@@ -137,9 +137,9 @@ docker_manifests:
   - name_template: "ghcr.io/chr-fritz/knx-exporter:latest"
     skip_push: auto
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-x64"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm64"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}"
     image_templates:
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-x64"
