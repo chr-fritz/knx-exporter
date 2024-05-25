@@ -30,7 +30,7 @@ import (
 type exporter struct {
 	Port          uint16
 	health        healthcheck.Handler
-	meterRegistry prometheus.Registerer
+	meterRegistry *prometheus.Registry
 	server        *http.Server
 }
 
@@ -44,11 +44,15 @@ type Exporter interface {
 	AddReadinessCheck(name string, check healthcheck.Check)
 }
 
-func NewExporter(port uint16) Exporter {
+func NewExporter(port uint16, withGoMetrics bool) Exporter {
+	registry := prometheus.DefaultRegisterer.(*prometheus.Registry)
+	if !withGoMetrics {
+		registry = prometheus.NewPedanticRegistry()
+	}
 	return &exporter{
 		Port:          port,
 		health:        healthcheck.NewHandler(),
-		meterRegistry: prometheus.DefaultRegisterer,
+		meterRegistry: registry,
 		server:        &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", port)},
 	}
 }

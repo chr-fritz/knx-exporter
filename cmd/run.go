@@ -32,6 +32,7 @@ import (
 const RunPortParm = "exporter.port"
 const RunConfigFileParm = "exporter.configFile"
 const RunRestartParm = "exporter.restart"
+const WithGoMetricsParamName = "exporter.goMetrics"
 
 type RunOptions struct {
 	aliveCheckInterval time.Duration
@@ -57,9 +58,13 @@ func NewRunCommand() *cobra.Command {
 	cmd.Flags().Uint16P("port", "p", 8080, "The port where all metrics should be exported.")
 	cmd.Flags().StringP("configFile", "f", "config.yaml", "The knx configuration file.")
 	cmd.Flags().StringP("restart", "r", "health", "The restart behaviour. Can be health or exit")
+	cmd.Flags().BoolP("withGoMetrics", "g", true, "Should the go metrics also be exported?")
+
 	_ = viper.BindPFlag(RunPortParm, cmd.Flags().Lookup("port"))
 	_ = viper.BindPFlag(RunConfigFileParm, cmd.Flags().Lookup("configFile"))
 	_ = viper.BindPFlag(RunRestartParm, cmd.Flags().Lookup("restart"))
+	_ = viper.BindPFlag(WithGoMetricsParamName, cmd.Flags().Lookup("withGoMetrics"))
+
 	_ = cmd.RegisterFlagCompletionFunc("configFile", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{"yaml", "yml"}, cobra.ShellCompDirectiveFilterFileExt
 	})
@@ -73,7 +78,7 @@ func NewRunCommand() *cobra.Command {
 }
 
 func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
-	exporter := metrics.NewExporter(uint16(viper.GetUint(RunPortParm)))
+	exporter := metrics.NewExporter(uint16(viper.GetUint(RunPortParm)), viper.GetBool(WithGoMetricsParamName))
 
 	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
 	metricsExporter, err := i.initAndRunMetricsExporter(exporter)
