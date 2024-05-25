@@ -49,14 +49,8 @@ dockers:
       - knx-exporter
     use: buildx
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:latest-x64"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-x64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-x64"
-      - "ghcr.io/chr-fritz/knx-exporter:latest-x64"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-x64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-x64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}-x64"
     skip_push: false
     dockerfile: Dockerfile
     build_flag_templates:
@@ -77,14 +71,8 @@ dockers:
       - knx-exporter
     use: buildx
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:latest-arm64"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64"
-      - "ghcr.io/chr-fritz/knx-exporter:latest-arm64"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}-arm64"
     skip_push: false
     dockerfile: Dockerfile
     build_flag_templates:
@@ -106,14 +94,8 @@ dockers:
       - knx-exporter
     use: buildx
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:latest-arm7"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm7"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm7"
-      - "ghcr.io/chr-fritz/knx-exporter:latest-arm7"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm7"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm7"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}-arm7"
     skip_push: false
     dockerfile: Dockerfile
     build_flag_templates:
@@ -130,45 +112,51 @@ dockers:
       - scripts/docker/etc_passwd
 docker_manifests:
   - name_template: "quay.io/chrfritz/knx-exporter:latest"
+    skip_push: auto
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:latest-x64"
-      - "quay.io/chrfritz/knx-exporter:latest-arm64"
-      - "quay.io/chrfritz/knx-exporter:latest-arm7"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "quay.io/chrfritz/knx-exporter:{{ .Tag }}"
     image_templates:
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
       - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
+    skip_push: auto
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-x64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm7"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}"
+    skip_push: auto
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-x64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:v{{ .Major }}-arm7"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "ghcr.io/chr-fritz/knx-exporter:latest"
+    skip_push: auto
     image_templates:
-      - "ghcr.io/chr-fritz/knx-exporter:latest-x64"
-      - "ghcr.io/chr-fritz/knx-exporter:latest-arm64"
-      - "ghcr.io/chr-fritz/knx-exporter:latest-arm7"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
+      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}"
     image_templates:
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-x64"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm64"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
+    skip_push: auto
     image_templates:
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-x64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}-arm7"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-x64"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm64"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}"
+    skip_push: auto
     image_templates:
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}-x64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}-arm64"
-      - "ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}-arm7"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-x64"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm64"
+      - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm7"
 brews:
   - repository:
       owner: chr-fritz
@@ -176,10 +164,11 @@ brews:
     commit_author:
       name: goreleaserbot
       email: goreleaser@chr-fritz.de
-    folder: Formula
+    directory: Formula
     homepage: "https://github.com/chr-fritz/knx-exporter"
     description: "The KNX Prometheus Exporter is a small bridge to export values measured by KNX sensors to Prometheus."
     license: "Apache-2.0"
+    skip_upload: auto
     test: |
       system "#{bin}/knx-exporter --version"
     install: |
@@ -237,6 +226,7 @@ changelog:
       - '^docs:'
       - '^test:'
 release:
+  prerelease: auto
   footer: |
     ## Docker Images
 
