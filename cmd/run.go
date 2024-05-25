@@ -52,7 +52,7 @@ func NewRunCommand() *cobra.Command {
 		Short: "Run the exporter",
 		Long:  `Run the exporter which exports the received values from all configured Group Addresses to prometheus.`,
 		Args:  cobra.NoArgs,
-		RunE:  runOptions.run,
+		Run:   runOptions.run,
 	}
 
 	cmd.Flags().Uint16P("port", "p", 8080, "The port where all metrics should be exported.")
@@ -77,19 +77,22 @@ func NewRunCommand() *cobra.Command {
 	return &cmd
 }
 
-func (i *RunOptions) run(_ *cobra.Command, _ []string) error {
+func (i *RunOptions) run(_ *cobra.Command, _ []string) {
 	exporter := metrics.NewExporter(uint16(viper.GetUint(RunPortParm)), viper.GetBool(WithGoMetricsParamName))
 
 	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
 	metricsExporter, err := i.initAndRunMetricsExporter(exporter)
 	if err != nil {
-		return err
+		logrus.Error("Unable to init metrics exporter: ", err)
+		return
 	}
 
 	go i.aliveCheck(exporter, metricsExporter)
 
 	defer metricsExporter.Close()
-	return exporter.Run()
+	if err = exporter.Run(); err != nil {
+		logrus.Error("Can not run metrics exporter: ", err)
+	}
 }
 
 func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.MetricsExporter) {
