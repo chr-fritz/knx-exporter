@@ -1,0 +1,27 @@
+{{- if not .Values.connection }}
+{{- fail "Missing connection configuration" }}
+{{- end }}
+
+{{- if not .Values.connection.endpoint }}
+{{- fail "Missing knx endpoint in `connection.endpoint`." }}
+{{- end }}
+
+{{- if not .Values.connection.physicalAddress }}
+{{- fail "Missing physical knx address in `connection.physicalAddress`." }}
+{{- end }}
+
+{{- if not .Values.connection.type }}
+{{- fail "Missing connection type in `connection.type`." }}
+{{- end }}
+
+{{- if not (or (eq .Values.connection.type "Tunnel") (eq .Values.connection.type "Router")) }}
+{{- fail "Connection type must be either `Tunnel` or `Router`" }}
+{{- end }}
+
+{{- if and (eq .Values.connection.type "Tunnel") (not .Values.connection.tunnelConfig) }}
+{{- fail "Connection type is Tunnel but `connection.tunnelConfig` is empty." }}
+{{- end }}
+
+{{- if and (eq .Values.connection.type "Router") (not .Values.connection.routerConfig) }}
+{{- fail "Connection type is Router but `connection.routerConfig` is empty." }}
+{{- end }}

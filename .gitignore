@@ -5,3 +5,4 @@ completions/
 bin/
 reports/
 .sonarcloud.properties
+test-values.yaml
