@@ -13,6 +13,7 @@
 # limitations under the License.
 
 FROM scratch
+LABEL org.opencontainers.image.description="The KNX Prometheus Exporter is a small bridge to export values measured by KNX sensors to Prometheus."
 COPY scripts/docker/etc_passwd /etc/passwd
 COPY knx-exporter /
 COPY pkg/.knx-exporter.yaml /etc/knx-exporter.yaml
