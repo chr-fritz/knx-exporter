@@ -62,7 +62,7 @@ func (e exporter) Run() error {
 
 	server.HandleFunc("/live", e.health.LiveEndpoint)
 	server.HandleFunc("/ready", e.health.ReadyEndpoint)
-	handler := promhttp.Handler()
+	handler := promhttp.HandlerFor(e.meterRegistry, promhttp.HandlerOpts{EnableOpenMetrics: true})
 	server.Handle("/metrics", handler)
 	_, _ = daemon.SdNotify(false, daemon.SdNotifyReady)
 
