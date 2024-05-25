@@ -45,5 +45,19 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_CHARTS_PRIVATE_TOKEN }}
           GOBIN: /usr/local/bin/
+
+      - name: Helm Installation
+        uses: azure/setup-helm@v4
+        with:
+          version: "latest" # default is latest (stable)
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Helm Package
+        run: helm package charts/${GITHUB_REPOSITORY#*/} --app-version "${GITHUB_REF_NAME}" --version "${GITHUB_REF_NAME#v}"
+
+      - name: Helm Push
+        run: |
+          CHART_PACKAGE_NAME="${GITHUB_REPOSITORY#*/}-helm-${GITHUB_REF_NAME#v}.tgz"
+          helm push "${CHART_PACKAGE_NAME}" oci://ghcr.io/$GITHUB_ACTOR
