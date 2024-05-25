@@ -1,0 +1,120 @@
+# Default values for knx-exporter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: ghcr.io/chr-fritz/knx-exporter
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: [ ]
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: false
+  # Annotations to add to the service account
+  annotations: { }
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: { }
+podLabels: { }
+
+podSecurityContext: { }
+# fsGroup: 2000
+
+securityContext: { }
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+# runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources: { }
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /live
+    port: http
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+
+logging:
+  # Defines the logging format. Possible values are "text" and "json"
+  format: text
+  # Defines the minimal log level that should be printed within the log on stdout.
+  # Possible values are:
+  # * panic
+  # * fatal
+  # * error
+  # * warn
+  # * warning
+  # * info
+  # * debug
+  # * trace
+  level: info
+# Export also go runtime metrics like cpu or memory usage
+exportGoMetrics: false
+# Defines the connection parameters. See https://github.com/chr-fritz/knx-exporter?tab=readme-ov-file#the-connection-section
+connection:
+  type: "Tunnel"
+  endpoint: "192.168.1.15:3671"
+  physicalAddress: 2.0.1
+  tunnelConfig: { }
+  routerConfig: { }
+metricsPrefix: knx_
+# Defines the exported group addresses. See https://github.com/chr-fritz/knx-exporter?tab=readme-ov-file#the-addressconfigs-section
+addressConfigs: { }
+#  0/0/1:
+#    Name: dummy_metric
+#    DPT: 1.*
+#    Export: true
+#    MetricType: "counter"
+#    ReadActive: true
+#    MaxAge: 10m
+#    Comment: dummy comment
+#    Labels:
+#      room: office
+readStartupInterval: 500ms
+
+# Additional volumes on the output Deployment definition.
+volumes: [ ]
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: [ ]
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: { }
+
+tolerations: [ ]
+
+affinity: { }

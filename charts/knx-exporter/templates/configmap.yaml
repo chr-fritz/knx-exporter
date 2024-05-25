@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "knx-exporter.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "knx-exporter.labels" . | nindent 4 }}
+data:
+  knx-exporter.yaml: |
+    connection:
+      type: {{ .Values.connection.type | quote}}
+      endpoint: {{ .Values.connection.endpoint | quote }}
+      physicalAddress: {{ .Values.connection.physicalAddress | quote }}
+      {{- with .Values.connection.tunnelConfig }}
+      tunnelConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.connection.routerConfig }}
+      routerConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    metricsPrefix: {{ .Values.metricsPrefix | quote }}
+    addressConfigs:
+    {{- toYaml .Values.addressConfigs | nindent 6 }}
+    {{- with .Values.readStartupInterval }}
+    readStartupInterval: {{ . }}
+    {{- end }}
