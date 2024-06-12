@@ -45,7 +45,7 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_CHARTS_PRIVATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOBIN: /usr/local/bin/
 
       - name: Helm Installation
