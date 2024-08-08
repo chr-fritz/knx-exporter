@@ -1,7 +1,7 @@
 # KNX Prometheus Exporter
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fchr-fritz%2Fknx-exporter.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fchr-fritz%2Fknx-exporter?ref=badge_small)
-[![Go build](https://github.com/chr-fritz/knx-exporter/actions/workflows/go.yaml/badge.svg)](https://github.com/chr-fritz/knx-exporter/actions/workflows/go.yaml)
+[![Go build](https://github.com/chr-fritz/knx-exporter/actions/workflows/go.yaml/badge.svg?branch=main)](https://github.com/chr-fritz/knx-exporter/actions/workflows/go.yaml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=chr-fritz_knx-exporter&metric=coverage)](https://sonarcloud.io/dashboard?id=chr-fritz_knx-exporter)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=chr-fritz_knx-exporter&metric=alert_status)](https://sonarcloud.io/dashboard?id=chr-fritz_knx-exporter)
 [![Go Reference](https://pkg.go.dev/badge/github.com/chr-fritz/knx-exporter.svg)](https://pkg.go.dev/github.com/chr-fritz/knx-exporter)
