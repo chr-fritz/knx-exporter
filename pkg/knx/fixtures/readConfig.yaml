@@ -48,3 +48,14 @@ AddressConfigs:
     ReadStartup: false
     ReadActive: false
     MaxAge: 5s
+  0/0/5:
+    Name: dummy_metric4
+    DPT: 1.*
+    Export: true
+    MetricType: "counter"
+    ReadStartup: true
+    ReadActive: true
+    MaxAge: 5s
+    ReadType: WriteOther
+    ReadAddress: 0/0/6
+    ReadBody: [ 0x1 ]

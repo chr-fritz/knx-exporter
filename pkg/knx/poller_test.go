@@ -119,12 +119,25 @@ func TestPoller(t *testing.T) {
 	mockSnapshotHandler.EXPECT().
 		FindYoungestSnapshot("knx_dummy_metric2").
 		Return(nil)
+	mockSnapshotHandler.EXPECT().
+		FindYoungestSnapshot("knx_dummy_metric4").
+		Return(&Snapshot{
+			name:      "knx_dummy_metric4",
+			timestamp: time.Now().Add(-16 * time.Second),
+			config:    &GroupAddressConfig{},
+		})
 
 	groupClient.EXPECT().Send(knx.GroupEvent{
 		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 1),
 	}).Times(1)
 	groupClient.EXPECT().Send(knx.GroupEvent{
 		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 3),
+	}).Times(1)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 5),
+	}).Times(0)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupWrite, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 6), Data: []byte{1},
 	}).Times(1)
 
 	p := NewPoller(config, groupClient, mockSnapshotHandler, messageCounter)

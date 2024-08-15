@@ -90,6 +90,12 @@ func TestStartupReader(t *testing.T) {
 	groupClient.EXPECT().Send(knx.GroupEvent{
 		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 4),
 	}).Times(0)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 5),
+	}).Times(0)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupWrite, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 6), Data: []byte{1},
+	}).Times(1)
 
 	s := NewStartupReader(config, groupClient, mockSnapshotHandler, messageCounter)
 	s.Run()
