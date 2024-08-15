@@ -8,7 +8,7 @@ metadata:
 data:
   knx-exporter.yaml: |
     connection:
-      type: {{ .Values.connection.type | quote}}
+      type: {{ .Values.connection.type | quote }}
       endpoint: {{ .Values.connection.endpoint | quote }}
       physicalAddress: {{ .Values.connection.physicalAddress | quote }}
       {{- with .Values.connection.tunnelConfig }}

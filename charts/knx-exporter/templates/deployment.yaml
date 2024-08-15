@@ -40,7 +40,7 @@ spec:
             - --withGoMetrics={{ .Values.exportGoMetrics }}
             - -r
             - health
-            {{- with .Values.logging}}
+            {{- with .Values.logging }}
             {{- with .format }}
             - --log_format={{ . }}
             {{- end }}
