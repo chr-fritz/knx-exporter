@@ -1,4 +1,4 @@
-// Copyright © 2020-2022 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,60 +15,60 @@
 package logging
 
 import (
-    "reflect"
-    "testing"
+	"reflect"
+	"testing"
 
-    "github.com/sirupsen/logrus"
-    "github.com/stretchr/testify/assert"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_loggerConfig_Initialize(t *testing.T) {
-    tests := []struct {
-        name              string
-        level             string
-        format            string
-        expectedLevel     logrus.Level
-        expectedFormatter reflect.Type
-    }{
-        {
-            "info text to stderr",
-            "info",
-            "text",
-            logrus.InfoLevel,
-            reflect.TypeOf(&logrus.TextFormatter{}),
-        },
-        {
-            "info text as json",
-            "info",
-            "json",
-            logrus.InfoLevel,
-            reflect.TypeOf(&logrus.JSONFormatter{}),
-        },
-        {
-            "unknown log formatter",
-            "info",
-            "unknown",
-            logrus.InfoLevel,
-            reflect.TypeOf(&logrus.TextFormatter{}),
-        },
-        {
-            "invalid debug level",
-            "not valid",
-            "text",
-            logrus.InfoLevel,
-            reflect.TypeOf(&logrus.TextFormatter{}),
-        },
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            lc := &loggerConfig{
-                level:         tt.level,
-                formatterName: tt.format,
-            }
-            lc.Initialize()
-            logger := logrus.StandardLogger()
-            assert.Equal(t, tt.expectedLevel, logger.Level)
-            assert.Equal(t, tt.expectedFormatter, reflect.TypeOf(logger.Formatter))
-        })
-    }
+	tests := []struct {
+		name              string
+		level             string
+		format            string
+		expectedLevel     logrus.Level
+		expectedFormatter reflect.Type
+	}{
+		{
+			"info text to stderr",
+			"info",
+			"text",
+			logrus.InfoLevel,
+			reflect.TypeOf(&logrus.TextFormatter{}),
+		},
+		{
+			"info text as json",
+			"info",
+			"json",
+			logrus.InfoLevel,
+			reflect.TypeOf(&logrus.JSONFormatter{}),
+		},
+		{
+			"unknown log formatter",
+			"info",
+			"unknown",
+			logrus.InfoLevel,
+			reflect.TypeOf(&logrus.TextFormatter{}),
+		},
+		{
+			"invalid debug level",
+			"not valid",
+			"text",
+			logrus.InfoLevel,
+			reflect.TypeOf(&logrus.TextFormatter{}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lc := &loggerConfig{
+				level:         tt.level,
+				formatterName: tt.format,
+			}
+			lc.Initialize()
+			logger := logrus.StandardLogger()
+			assert.Equal(t, tt.expectedLevel, logger.Level)
+			assert.Equal(t, tt.expectedFormatter, reflect.TypeOf(logger.Formatter))
+		})
+	}
 }

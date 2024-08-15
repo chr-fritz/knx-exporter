@@ -1,5 +1,4 @@
-#
-# Copyright © 2022-2023 Christian Fritz <mail@chr-fritz.de>
+# Copyright © 2022-2024 Christian Fritz <mail@chr-fritz.de>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 systemctl disable knx-exporter.service || true
 systemctl stop knx-exporter.service || true

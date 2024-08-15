@@ -1,4 +1,4 @@
-// Copyright © 2020-2022 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"testing"
 	"time"
+
+	"github.com/spf13/viper"
 
 	knxFake "github.com/chr-fritz/knx-exporter/pkg/knx/fake"
 	metricsFake "github.com/chr-fritz/knx-exporter/pkg/metrics/fake"
