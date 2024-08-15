@@ -111,13 +111,13 @@ func (l *listener) handleEvent(event knx.GroupEvent) {
 		value:       floatValue,
 		source:      PhysicalAddress(event.Source),
 		timestamp:   time.Now(),
-		config:      &addr,
+		config:      addr,
 		destination: destination,
 	}
 	l.messageCounter.WithLabelValues("received", "true").Inc()
 }
 
-func unpackEvent(event knx.GroupEvent, addr GroupAddressConfig) (DPT, error) {
+func unpackEvent(event knx.GroupEvent, addr *GroupAddressConfig) (DPT, error) {
 	v, found := dpt.Produce(addr.DPT)
 	if !found {
 		return nil, fmt.Errorf("can not find dpt description for \"%s\" to unpack %s telegram from %s for %s",

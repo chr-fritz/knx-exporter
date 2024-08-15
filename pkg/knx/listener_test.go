@@ -101,7 +101,7 @@ func Test_listener_Run(t *testing.T) {
 			l := NewListener(
 				&Config{
 					MetricsPrefix: "knx_",
-					AddressConfigs: map[GroupAddress]GroupAddressConfig{
+					AddressConfigs: map[GroupAddress]*GroupAddressConfig{
 						GroupAddress(1): {Name: "a", DPT: "1.001", Export: true},
 						GroupAddress(2): {Name: "b", DPT: "5.001", Export: true},
 						GroupAddress(3): {Name: "c", DPT: "9.001", Export: true},

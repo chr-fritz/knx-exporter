@@ -22,3 +22,7 @@ AddressConfigs:
     MetricType: "counter"
     ReadActive: true
     MaxAge: 10m
+    ReadStartup: true
+    ReadType: WriteOther
+    ReadAddress: 0/0/2
+    ReadBody: [ 0x1 ]

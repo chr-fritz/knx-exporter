@@ -82,7 +82,7 @@ func (p *poller) pollAddresses(t time.Time) {
 		if s == nil {
 			logrus.WithField("address", address).
 				Tracef("Initial poll of %s", address.String())
-			p.sendReadMessage(address)
+			p.sendReadMessage(address, config)
 			continue
 		}
 
@@ -96,16 +96,23 @@ func (p *poller) pollAddresses(t time.Time) {
 					address.String(),
 					diff.String(),
 					maxAge.String())
-			p.sendReadMessage(address)
+			p.sendReadMessage(address, config)
 		}
 	}
 }
 
-func (p *poller) sendReadMessage(address GroupAddress) {
+func (p *poller) sendReadMessage(address GroupAddress, config *GroupAddressConfig) {
 	event := knx.GroupEvent{
-		Command:     knx.GroupRead,
-		Destination: cemi.GroupAddr(address),
-		Source:      cemi.IndividualAddr(p.config.Connection.PhysicalAddress),
+		Command: knx.GroupRead,
+		Source:  cemi.IndividualAddr(p.config.Connection.PhysicalAddress),
+	}
+
+	if config.ReadType == WriteOther {
+		event.Command = knx.GroupWrite
+		event.Destination = cemi.GroupAddr(config.ReadAddress)
+		event.Data = config.ReadBody
+	} else {
+		event.Destination = cemi.GroupAddr(address)
 	}
 
 	if e := p.client.Send(event); e != nil {
@@ -124,10 +131,13 @@ func getMetricsToPoll(config *Config) GroupAddressConfigSet {
 		}
 
 		interval = time.Duration(math.Max(float64(interval), float64(5*time.Second)))
-		toPoll[address] = GroupAddressConfig{
-			Name:       config.NameFor(addressConfig),
-			ReadActive: true,
-			MaxAge:     Duration(interval),
+		toPoll[address] = &GroupAddressConfig{
+			Name:        config.NameFor(addressConfig),
+			ReadActive:  true,
+			ReadType:    addressConfig.ReadType,
+			ReadAddress: addressConfig.ReadAddress,
+			ReadBody:    addressConfig.ReadBody,
+			MaxAge:      Duration(interval),
 		}
 	}
 	return toPoll

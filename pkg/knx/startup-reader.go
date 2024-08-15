@@ -1,7 +1,6 @@
 package knx
 
 import (
-	"reflect"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -46,16 +45,10 @@ func (s *startupReader) Run() {
 	}
 	logrus.Infof("start reading addresses after startup in %dms intervals.", readInterval.Milliseconds())
 	s.ticker = time.NewTicker(readInterval)
-	c := s.ticker.C
 	go func() {
-		addressesToRead := reflect.ValueOf(s.metricsToRead).MapKeys()
-		for range c {
-			if len(addressesToRead) == 0 {
-				break
-			}
-			addressToRead := addressesToRead[0].Interface().(GroupAddress)
-			s.sendReadMessage(addressToRead)
-			addressesToRead = addressesToRead[1:]
+		for address, config := range s.metricsToRead {
+			<-s.ticker.C
+			s.sendReadMessage(address, config)
 		}
 		s.ticker.Stop()
 	}()
@@ -67,11 +60,18 @@ func (s *startupReader) Close() {
 	}
 }
 
-func (s *startupReader) sendReadMessage(address GroupAddress) {
+func (s *startupReader) sendReadMessage(address GroupAddress, config *GroupAddressConfig) {
 	event := knx.GroupEvent{
-		Command:     knx.GroupRead,
-		Destination: cemi.GroupAddr(address),
-		Source:      cemi.IndividualAddr(s.config.Connection.PhysicalAddress),
+		Command: knx.GroupRead,
+		Source:  cemi.IndividualAddr(s.config.Connection.PhysicalAddress),
+	}
+
+	if config.ReadType == WriteOther {
+		event.Command = knx.GroupWrite
+		event.Destination = cemi.GroupAddr(config.ReadAddress)
+		event.Data = config.ReadBody
+	} else {
+		event.Destination = cemi.GroupAddr(address)
 	}
 
 	if e := s.client.Send(event); e != nil {
@@ -88,9 +88,12 @@ func getMetricsToRead(config *Config) GroupAddressConfigSet {
 			continue
 		}
 
-		toRead[address] = GroupAddressConfig{
+		toRead[address] = &GroupAddressConfig{
 			Name:        config.NameFor(addressConfig),
 			ReadStartup: true,
+			ReadType:    addressConfig.ReadType,
+			ReadAddress: addressConfig.ReadAddress,
+			ReadBody:    addressConfig.ReadBody,
 		}
 	}
 	return toRead

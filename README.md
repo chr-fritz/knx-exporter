@@ -122,7 +122,8 @@ KNX Prometheus Exporter will identify itself within it. It has three properties:
 - `Endpoint` This defines the ip address or hostname including the port to where the KNX Prometheus
   Exporter should open the connection. In case of you are using `Router` in `Type` the default might
   be `224.0.23.12:3671`.
-- `PhysicalAddress` This defines the physical address of how the KNX Prometheus Exporter will identify
+- `PhysicalAddress` This defines the physical address of how the KNX Prometheus Exporter will
+  identify
   itself within your KNX address.
 - `RouterConfig` This defines additional
 - `TunnelConfig` contains some specific configurations if Type is Tunnel
@@ -175,6 +176,9 @@ exported to Prometheus. It contains the following structure for every exported g
       ReadActive: true
       MaxAge: 10m
       Comment: dummy comment
+      ReadType: WriteOther
+      ReadAddress: 0/0/2
+      ReadBody: [ 0x1 ]
       Labels:
           room: office
 ```
@@ -206,6 +210,12 @@ Next it defines the actual information for a single group address:
 - `ReadActive` can either be `true` or `false`. If set to `true` the KNX Prometheus Exporter will
   send a `GroupValueRead` telegram to the group address to active ask for a new value if the last
   received value is older than `MaxAge`.
+- `ReadType` defines the type how to trigger the read request. Possible Values are `GroupRead` and
+  `WriteOther`. Default is `GroupRead`.
+- `ReadAddress` defines the group address to which address a `GroupWrite` request should be sent to
+  initiate sending the data if `ReadType` is set to `WriteOther`.
+- `ReadBody` is a byte array with the content to sent to `ReadAddress` if `ReadType` is set to
+  `WriteOther`.
 - `MaxAge` defines the maximum age of a value until the KNX Prometheus Exporter will send a
   `GroupValueRead` telegram to active request a new value for the group address. This setting will
   be ignored if `ReadActive` is set to `false`.

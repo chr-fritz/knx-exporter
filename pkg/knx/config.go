@@ -76,7 +76,7 @@ func (c *Config) NameForGa(address GroupAddress) string {
 }
 
 // NameFor return s the full metric name for the given GroupAddressConfig.
-func (c *Config) NameFor(gaConfig GroupAddressConfig) string {
+func (c *Config) NameFor(gaConfig *GroupAddressConfig) string {
 	return c.MetricsPrefix + gaConfig.Name
 }
 
@@ -197,6 +197,31 @@ func (d *Duration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type ReadType string
+
+const GroupRead = ReadType("GroupRead")
+const WriteOther = ReadType("WriteOther")
+
+func (t ReadType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(t))
+}
+
+func (t *ReadType) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+	switch strings.ToLower(str) {
+	case "groupread":
+		*t = GroupRead
+	case "writeother":
+		*t = WriteOther
+	default:
+		*t = GroupRead
+	}
+	return nil
+}
+
 // GroupAddressConfig defines all information to map a KNX group address to a prometheus metric.
 type GroupAddressConfig struct {
 	// Name defines the prometheus metric name without the MetricsPrefix.
@@ -213,6 +238,12 @@ type GroupAddressConfig struct {
 	ReadStartup bool `json:",omitempty"`
 	// ReadActive allows the exporter to actively send `GroupValueRead` telegrams to actively poll the value instead waiting for it.
 	ReadActive bool `json:",omitempty"`
+	// ReadType defines the type how to trigger the read request. Possible Values are GroupRead and WriteOther.
+	ReadType ReadType `json:",omitempty"`
+	// ReadAddress defines the group address to which address a GroupWrite request should be sent to initiate sending the data if ReadType is set to WriteOther.
+	ReadAddress GroupAddress `json:",omitempty"`
+	// ReadBody is a byte array with the content to sent to ReadAddress if ReadType is set to WriteOther.
+	ReadBody []byte `json:",omitempty"`
 	// MaxAge of a value until it will actively send a `GroupValueRead` telegram to read the value if ReadActive is set to true.
 	MaxAge Duration `json:",omitempty"`
 	// Labels defines static labels that should be set when exporting the metric using prometheus.
@@ -220,4 +251,4 @@ type GroupAddressConfig struct {
 }
 
 // GroupAddressConfigSet is a shortcut type for the group address config map.
-type GroupAddressConfigSet map[GroupAddress]GroupAddressConfig
+type GroupAddressConfigSet map[GroupAddress]*GroupAddressConfig
