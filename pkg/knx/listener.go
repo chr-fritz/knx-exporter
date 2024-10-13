@@ -84,6 +84,11 @@ func (l *listener) handleEvent(event knx.GroupEvent) {
 		return
 	}
 
+	if event.Command == knx.GroupRead {
+		logger.Debug("Skip group event as it is a GroupRead message.")
+		return
+	}
+
 	value, err := unpackEvent(event, addr)
 	logger = logger.With("dpt", addr.DPT)
 
