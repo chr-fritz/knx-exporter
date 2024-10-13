@@ -15,10 +15,10 @@
 package knx
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 	"github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/cemi"
 )
@@ -57,7 +57,7 @@ func (s *startupReader) Run() {
 	if readInterval.Milliseconds() <= 0 {
 		readInterval = 200 * time.Millisecond
 	}
-	logrus.Infof("start reading addresses after startup in %dms intervals.", readInterval.Milliseconds())
+	slog.Info("start reading addresses after startup.", "delay", readInterval)
 	s.ticker = time.NewTicker(readInterval)
 	go func() {
 		for address, config := range s.metricsToRead {
@@ -89,8 +89,7 @@ func (s *startupReader) sendReadMessage(address GroupAddress, config *GroupAddre
 	}
 
 	if e := s.client.Send(event); e != nil {
-		logrus.WithField("address", address).
-			Errorf("can not send read request for %s: %s", address.String(), e)
+		slog.Error("can not send read request: "+e.Error(), "address", address)
 	}
 	s.messageCounter.WithLabelValues("sent", "true").Inc()
 }

@@ -16,12 +16,12 @@ package knx
 
 import (
 	"fmt"
+	"log/slog"
 	"math"
 	"reflect"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 	"github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/dpt"
 )
@@ -37,6 +37,7 @@ type listener struct {
 	metricsChan    chan *Snapshot
 	messageCounter *prometheus.CounterVec
 	active         bool
+	logger         *slog.Logger
 }
 
 func NewListener(config *Config, inbound <-chan knx.GroupEvent, metricsChan chan *Snapshot, messageCounter *prometheus.CounterVec) Listener {
@@ -46,18 +47,22 @@ func NewListener(config *Config, inbound <-chan knx.GroupEvent, metricsChan chan
 		metricsChan:    metricsChan,
 		messageCounter: messageCounter,
 		active:         true,
+		logger: slog.With(
+			"connectionType", config.Connection.Type,
+			"endpoint", config.Connection.Endpoint,
+		),
 	}
 }
 
 func (l *listener) Run() {
-	logrus.Info("Waiting for incoming knx telegrams...")
+	l.logger.Info("Waiting for incoming knx telegrams...")
 	defer func() {
 		l.active = false
 	}()
 	for msg := range l.inbound {
 		l.handleEvent(msg)
 	}
-	logrus.Warn("Finished listening for incoming knx telegrams")
+	l.logger.Warn("Finished listening for incoming knx telegrams")
 }
 
 func (l *listener) IsActive() bool {
@@ -67,45 +72,36 @@ func (l *listener) IsActive() bool {
 func (l *listener) handleEvent(event knx.GroupEvent) {
 	l.messageCounter.WithLabelValues("received", "false").Inc()
 	destination := GroupAddress(event.Destination)
+	logger := l.logger.With(
+		"command", event.Command.String(),
+		"source", event.Source.String(),
+		"destination", event.Destination.String(),
+	)
 
 	addr, ok := l.config.AddressConfigs[destination]
 	if !ok {
-		logrus.
-			WithFields(logrus.Fields{
-				"command":     event.Command.String(),
-				"source":      event.Source.String(),
-				"destination": event.Destination.String(),
-			}).
-			Tracef("Got ignored %s telegram from %s for %s.",
-				event.Command.String(),
-				event.Source.String(),
-				event.Destination.String())
+		logger.Debug("Received event but ignore them due to missing configuration")
 		return
 	}
 
 	value, err := unpackEvent(event, addr)
-	messageLogFields := logrus.Fields{
-		"dpt":         addr.DPT,
-		"command":     event.Command.String(),
-		"source":      event.Source.String(),
-		"destination": event.Destination.String(),
-	}
+	logger = logger.With("dpt", addr.DPT)
+
 	if err != nil {
-		logrus.WithFields(messageLogFields).
-			Warn(err)
+		logger.Warn(err.Error())
 		return
 	}
 
 	floatValue, err := extractAsFloat64(value)
 	if err != nil {
-		logrus.WithFields(messageLogFields).
-			Warn(err)
+		logger.Warn(err.Error())
 		return
 	}
 	metricName := l.config.NameFor(addr)
-	logrus.WithFields(messageLogFields).
-		WithField("metricName", metricName).
-		Tracef("Processed value %s for %s on group address %s", value.String(), metricName, destination)
+	logger.With(
+		"metricName", metricName,
+		"value", value,
+	).Log(nil, slog.LevelDebug-2, "Processed received group address value")
 	l.metricsChan <- &Snapshot{
 		name:        metricName,
 		value:       floatValue,

@@ -15,11 +15,11 @@
 package knx
 
 import (
+	"log/slog"
 	"math"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 	"github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/cemi"
 )
@@ -60,7 +60,7 @@ func (p *poller) Run() {
 	if p.pollingInterval <= 0 {
 		return
 	}
-	logrus.Tracef("start polling. check every %s for addresses to poll.", p.pollingInterval)
+	slog.Log(nil, slog.LevelDebug-2, "Start polling group addresses", "pollingInterval", p.pollingInterval)
 	p.ticker = time.NewTicker(p.pollingInterval)
 	c := p.ticker.C
 	go func() {
@@ -78,10 +78,10 @@ func (p *poller) Close() {
 
 func (p *poller) pollAddresses(t time.Time) {
 	for address, config := range p.metricsToPoll {
+		logger := slog.With("address", address)
 		s := p.snapshotHandler.FindYoungestSnapshot(config.Name)
 		if s == nil {
-			logrus.WithField("address", address).
-				Tracef("Initial poll of %s", address.String())
+			logger.Log(nil, slog.LevelDebug-2, "Initial polling of address")
 			p.sendReadMessage(address, config)
 			continue
 		}
@@ -89,13 +89,11 @@ func (p *poller) pollAddresses(t time.Time) {
 		diff := t.Sub(s.timestamp).Round(time.Second)
 		maxAge := time.Duration(config.MaxAge)
 		if diff >= maxAge {
-			logrus.WithField("address", address).
-				WithField("diff", diff).
-				WithField("maxAge", maxAge).
-				Tracef("Poll %s for new value as it is already %s old but max age is %s only",
-					address.String(),
-					diff.String(),
-					maxAge.String())
+			logger.Log(nil, slog.LevelDebug-2,
+				"Poll address for new value as it is to old",
+				"maxAge", maxAge,
+				"actualAge", diff,
+			)
 			p.sendReadMessage(address, config)
 		}
 	}
@@ -116,8 +114,7 @@ func (p *poller) sendReadMessage(address GroupAddress, config *GroupAddressConfi
 	}
 
 	if e := p.client.Send(event); e != nil {
-		logrus.WithField("address", address.String()).
-			Infof("can not send read request for %s: %s", address.String(), e)
+		slog.Info("Can not send read request: "+e.Error(), "address", address.String())
 	}
 	p.messageCounter.WithLabelValues("sent", "true").Inc()
 }

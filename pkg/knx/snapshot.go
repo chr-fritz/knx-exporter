@@ -20,13 +20,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 )
 
 // MetricSnapshotHandler holds and manages all the snapshots of metrics.
@@ -97,23 +97,23 @@ func (m *metricSnapshots) AddSnapshot(s *Snapshot) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	meta, ok := m.snapshots[key]
+	logger := slog.With(
+		"metricName", s.name,
+		"source", s.source,
+	)
+
 	if ok {
 		meta.snapshot = s
 	} else {
 		metric, err := createMetric(s, m.GetValueFunc(key))
 		if err != nil {
-			logrus.WithField("metricName", s.name).
-				WithField("source", s.source).
-				Warn(err)
+			logger.Warn(err.Error())
 			return
 		}
 		meta = snapshot{snapshot: s, metric: metric}
 		err = m.registerer.Register(meta.metric)
 		if err != nil && !errors.Is(err, prometheus.AlreadyRegisteredError{}) {
-			logrus.
-				WithField("metricName", s.name).
-				WithField("source", s.source).
-				Warnf("Can not register new metric %s from %s: %s", s.name, s.source.String(), err)
+			logger.Warn("Can not register new metric: " + err.Error())
 		}
 	}
 	m.snapshots[key] = meta

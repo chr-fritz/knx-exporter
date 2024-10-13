@@ -18,9 +18,9 @@ package knx
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 	"github.com/vapourismo/knx-go/knx"
 )
 
@@ -107,10 +107,11 @@ func (e *metricsExporter) IsAlive() error {
 func (e *metricsExporter) createClient() error {
 	switch e.config.Connection.Type {
 	case Tunnel:
-		logrus.WithField("endpoint", e.config.Connection.Endpoint).
-			WithField("connection_type", "tunnel").
-			WithField("useTcp", e.config.Connection.TunnelConfig.UseTCP).
-			Infof("Connect to %s using tunneling", e.config.Connection.Endpoint)
+		slog.With(
+			"endpoint", e.config.Connection.Endpoint,
+			"connection_type", "tunnel",
+			"useTcp", e.config.Connection.TunnelConfig.UseTCP,
+		).Info("Connecting to endpoint")
 		tunnel, err := knx.NewGroupTunnel(e.config.Connection.Endpoint, e.config.Connection.TunnelConfig.toKnxTunnelConfig())
 		if err != nil {
 			return err
@@ -118,9 +119,10 @@ func (e *metricsExporter) createClient() error {
 		e.client = &tunnel
 		return nil
 	case Router:
-		logrus.WithField("endpoint", e.config.Connection.Endpoint).
-			WithField("connection_type", "routing").
-			Infof("Connect to %s using multicast routing", e.config.Connection.Endpoint)
+		slog.With(
+			"endpoint", e.config.Connection.Endpoint,
+			"connection_type", "routing",
+		).Info("Connecting to endpoint")
 
 		config, err := e.config.Connection.RouterConfig.toKnxRouterConfig()
 		if err != nil {

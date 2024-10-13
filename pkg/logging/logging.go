@@ -15,9 +15,11 @@
 package logging
 
 import (
+	"github.com/spf13/viper"
+	"log/slog"
+	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -45,16 +47,19 @@ func InitFlags(flagset *pflag.FlagSet, cmd *cobra.Command) LoggerConfiguration {
 	flagset.StringVarP(&config.level, logLevelFlagName, "v", "info", "The minimum log level to print the messages.")
 	flagset.StringVarP(&config.formatterName, logFormatterFlagName, "", "text", "The format how to print the log messages.")
 
+	_ = viper.BindPFlag("logging.level", flagset.Lookup(logLevelFlagName))
+	_ = viper.BindPFlag("logging.format", flagset.Lookup(logFormatterFlagName))
+
 	if cmd != nil {
 		if e := cmd.RegisterFlagCompletionFunc(logLevelFlagName, flagCompletion); e != nil {
-			logrus.Warn("can not register flag completion for log_level: ", e)
+			slog.Warn("can not register flag completion for log_level", "err", e)
 		}
 
 		e := cmd.RegisterFlagCompletionFunc(logFormatterFlagName, func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return []string{"text", "json"}, cobra.ShellCompDirectiveDefault
 		})
 		if e != nil {
-			logrus.Warn("can not register flag completion for log formatter: ", e)
+			slog.Warn("can not register flag completion for log formatter", "err", e)
 		}
 	}
 
@@ -62,36 +67,38 @@ func InitFlags(flagset *pflag.FlagSet, cmd *cobra.Command) LoggerConfiguration {
 }
 
 func flagCompletion(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-	return []string{"panic", "fatal", "error", "warn", "warning", "info", "debug", "trace"}, cobra.ShellCompDirectiveDefault
+	return []string{"error", "warn", "info", "debug"}, cobra.ShellCompDirectiveDefault
 }
 
 func (lc *loggerConfig) Initialize() {
-	lc.setFormatter()
-	e := lc.setLevel()
+	level := lc.setLevel()
 
-	if e != nil {
-		logrus.Warnf("Unable to fully initialize logrus: %s", e)
+	opts := &slog.HandlerOptions{
+		AddSource:   true,
+		Level:       level,
+		ReplaceAttr: nil,
 	}
+	logger := slog.New(lc.setFormatter(opts))
+	slog.SetDefault(logger)
 }
 
-func (lc *loggerConfig) setLevel() error {
-	level, e := logrus.ParseLevel(lc.level)
+func (lc *loggerConfig) setLevel() slog.Level {
+	var level slog.Level
+	e := level.UnmarshalText([]byte(lc.level))
+
 	if e != nil {
-		return e
+		slog.Warn("Can not parse level", "invalid-level", lc.level)
+		return slog.LevelInfo
 	}
-	logrus.SetLevel(level)
-	return nil
+	return level
 }
-func (lc *loggerConfig) setFormatter() {
-	var formatter logrus.Formatter
+func (lc *loggerConfig) setFormatter(options *slog.HandlerOptions) slog.Handler {
 	switch strings.ToLower(lc.formatterName) {
 	case "json":
-		formatter = &logrus.JSONFormatter{}
+		return slog.NewJSONHandler(os.Stdout, options)
 	case "text":
-		formatter = &logrus.TextFormatter{}
+		fallthrough
 	default:
-		formatter = &logrus.TextFormatter{}
+		return slog.NewTextHandler(os.Stdout, options)
 	}
-
-	logrus.SetFormatter(formatter)
 }

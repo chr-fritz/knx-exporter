@@ -17,15 +17,14 @@ package knx
 import (
 	"encoding/xml"
 	"fmt"
+	"log/slog"
 	"os"
 	"regexp"
 	"strings"
 
-	"github.com/ghodss/yaml"
-	"github.com/sirupsen/logrus"
-
 	"github.com/chr-fritz/knx-exporter/pkg/knx/export"
 	"github.com/chr-fritz/knx-exporter/pkg/utils"
+	"github.com/ghodss/yaml"
 )
 
 func ConvertGroupAddresses(src string, target string) error {
@@ -93,20 +92,20 @@ func collectGroupAddresses(groupRange []export.GroupRange) []export.GroupAddress
 func convertAddresses(groupAddresses []export.GroupAddress) map[GroupAddress]*GroupAddressConfig {
 	addressConfigs := make(map[GroupAddress]*GroupAddressConfig)
 	for _, ga := range groupAddresses {
-		logger := logrus.WithField("address", ga.Address)
+		logger := slog.With("address", ga.Address)
 		address, err := NewGroupAddress(ga.Address)
 		if err != nil {
-			logger.Warnf("Can not convert address '%s': %s", ga.Address, err)
+			logger.Warn("Can not convert address: " + err.Error())
 			continue
 		}
 
 		name, err := normalizeMetricName(ga.Name)
 		if err != nil {
-			logger.Info("Can not normalize group address name, ", err)
+			logger.Info("Can not normalize group address name: " + err.Error())
 		}
 		dpt, err := normalizeDPTs(ga.DPTs)
 		if err != nil {
-			logger.Info("Can not normalize data type, ", err)
+			logger.Info("Can not normalize data type: " + err.Error())
 		}
 		cfg := &GroupAddressConfig{
 			Name:       name,

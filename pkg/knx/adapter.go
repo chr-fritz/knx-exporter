@@ -17,9 +17,10 @@ package knx
 //go:generate mockgen -destination=adapterMocks_test.go -package=knx -source=adapter.go
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
 	"github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/util"
+	"log/slog"
 )
 
 // GroupClient is a super interface for the knx.GroupClient interface to also export the Close() function.
@@ -38,11 +39,11 @@ type DPT interface {
 }
 
 func init() {
-	util.Logger = logger{}
+	util.Logger = knxLogger{}
 }
 
-type logger struct{}
+type knxLogger struct{}
 
-func (l logger) Printf(format string, args ...interface{}) {
-	logrus.Debugf(format, args...)
+func (l knxLogger) Printf(format string, args ...interface{}) {
+	slog.Debug(fmt.Sprintf(format, args...))
 }

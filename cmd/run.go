@@ -15,13 +15,13 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/heptiolabs/healthcheck"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -83,7 +83,7 @@ func (i *RunOptions) run(_ *cobra.Command, _ []string) {
 	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
 	metricsExporter, err := i.initAndRunMetricsExporter(exporter)
 	if err != nil {
-		logrus.Error("Unable to init metrics exporter: ", err)
+		slog.Error("Unable to init metrics exporter: " + err.Error())
 		return
 	}
 
@@ -91,7 +91,7 @@ func (i *RunOptions) run(_ *cobra.Command, _ []string) {
 
 	defer metricsExporter.Close()
 	if err = exporter.Run(); err != nil {
-		logrus.Error("Can not run metrics exporter: ", err)
+		slog.Error("Can not run metrics exporter: " + err.Error())
 	}
 }
 
@@ -113,7 +113,7 @@ func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.M
 		case <-stop:
 			err := exporter.Shutdown()
 			if err != nil {
-				logrus.Warn("Shutdown failed: ", err)
+				slog.Warn("Shutdown failed: " + err.Error())
 			}
 			return
 		}

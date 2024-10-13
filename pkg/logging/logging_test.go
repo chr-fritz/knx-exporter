@@ -15,10 +15,9 @@
 package logging
 
 import (
-	"reflect"
+	"log/slog"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,36 +26,36 @@ func Test_loggerConfig_Initialize(t *testing.T) {
 		name              string
 		level             string
 		format            string
-		expectedLevel     logrus.Level
-		expectedFormatter reflect.Type
+		expectedLevel     slog.Level
+		expectedFormatter slog.Handler
 	}{
 		{
 			"info text to stderr",
 			"info",
 			"text",
-			logrus.InfoLevel,
-			reflect.TypeOf(&logrus.TextFormatter{}),
+			slog.LevelInfo,
+			&slog.TextHandler{},
 		},
 		{
 			"info text as json",
 			"info",
 			"json",
-			logrus.InfoLevel,
-			reflect.TypeOf(&logrus.JSONFormatter{}),
+			slog.LevelInfo,
+			&slog.JSONHandler{},
 		},
 		{
 			"unknown log formatter",
 			"info",
 			"unknown",
-			logrus.InfoLevel,
-			reflect.TypeOf(&logrus.TextFormatter{}),
+			slog.LevelInfo,
+			&slog.TextHandler{},
 		},
 		{
 			"invalid debug level",
 			"not valid",
 			"text",
-			logrus.InfoLevel,
-			reflect.TypeOf(&logrus.TextFormatter{}),
+			slog.LevelInfo,
+			&slog.TextHandler{},
 		},
 	}
 	for _, tt := range tests {
@@ -66,9 +65,10 @@ func Test_loggerConfig_Initialize(t *testing.T) {
 				formatterName: tt.format,
 			}
 			lc.Initialize()
-			logger := logrus.StandardLogger()
-			assert.Equal(t, tt.expectedLevel, logger.Level)
-			assert.Equal(t, tt.expectedFormatter, reflect.TypeOf(logger.Formatter))
+			logger := slog.With("dummy")
+			assert.True(t, logger.Enabled(nil, tt.expectedLevel))
+			assert.False(t, logger.Enabled(nil, tt.expectedLevel-1))
+			assert.IsType(t, tt.expectedFormatter, logger.Handler())
 		})
 	}
 }
