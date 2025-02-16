@@ -17,6 +17,7 @@ package knx
 //go:generate mockgen -destination=snapshotMocks_test.go -package=knx -self_package=github.com/chr-fritz/knx-exporter/pkg/knx -source=snapshot.go
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -37,11 +38,9 @@ type MetricSnapshotHandler interface {
 	// It don't matter from which device the snapshot was received.
 	FindYoungestSnapshot(name string) *Snapshot
 	// Run let the MetricSnapshotHandler listen for new snapshots on the Snapshot channel.
-	Run()
+	Run(ctx context.Context)
 	// GetMetricsChannel returns the channel to send new snapshots to this MetricSnapshotHandler.
 	GetMetricsChannel() chan *Snapshot
-	// Close stops listening for new Snapshots and closes the Snapshot channel.
-	Close()
 	// IsActive indicates that this handler is active and waits for new metric snapshots
 	IsActive() bool
 }
@@ -122,19 +121,21 @@ func (m *metricSnapshots) FindYoungestSnapshot(name string) *Snapshot {
 	return youngest
 }
 
-func (m *metricSnapshots) Run() {
+func (m *metricSnapshots) Run(ctx context.Context) {
+	m.active = true
 	defer func() { m.active = false }()
-	for snap := range m.metricsChan {
-		m.AddSnapshot(snap)
+	for {
+		select {
+		case snap := <-m.metricsChan:
+			m.AddSnapshot(snap)
+		case <-ctx.Done():
+			break
+		}
 	}
 }
 
 func (m *metricSnapshots) IsActive() bool {
 	return m.active
-}
-
-func (m *metricSnapshots) Close() {
-	close(m.metricsChan)
 }
 
 func (m *metricSnapshots) GetMetricsChannel() chan *Snapshot {

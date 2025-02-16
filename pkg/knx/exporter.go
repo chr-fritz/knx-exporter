@@ -17,6 +17,7 @@ package knx
 //go:generate mockgen -destination=fake/exporterMocks.go -package=fake -source=exporter.go
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
@@ -25,8 +26,7 @@ import (
 )
 
 type MetricsExporter interface {
-	Run() error
-	Close()
+	Run(ctx context.Context) error
 	IsAlive() error
 }
 
@@ -63,32 +63,23 @@ func NewMetricsExporter(configFile string, registerer prometheus.Registerer) (Me
 	return m, nil
 }
 
-func (e *metricsExporter) Run() error {
+func (e *metricsExporter) Run(ctx context.Context) error {
+	e.poller = NewPoller(e.config, e.metrics, e.messageCounter)
+	e.listener = NewListener(e.config, e.metrics.GetMetricsChannel(), e.messageCounter)
+	go e.metrics.Run(ctx)
+
 	if err := e.createClient(); err != nil {
 		e.health = err
 		return err
 	}
-
-	e.poller = NewPoller(e.config, e.client, e.metrics, e.messageCounter)
-	e.poller.Run()
-
-	go e.metrics.Run()
-
-	e.listener = NewListener(e.config, e.client.Inbound(), e.metrics.GetMetricsChannel(), e.messageCounter)
-	go e.listener.Run()
-	return nil
-}
-
-func (e *metricsExporter) Close() {
-	if e.poller != nil {
-		e.poller.Close()
-	}
-	if e.client != nil {
+	context.AfterFunc(ctx, func() {
 		e.client.Close()
-	}
-	if e.metrics != nil {
-		e.metrics.Close()
-	}
+	})
+
+	go e.listener.Run(ctx, e.client.Inbound())
+	e.poller.Run(ctx, e.client, true)
+
+	return nil
 }
 
 func (e *metricsExporter) IsAlive() error {

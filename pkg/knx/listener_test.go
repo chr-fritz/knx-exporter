@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package knx
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -111,6 +112,8 @@ func Test_listener_Run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancelFunc := context.WithTimeout(context.TODO(), 20*time.Millisecond)
+			defer cancelFunc()
 
 			inbound := make(chan knx.GroupEvent)
 			metricsChan := make(chan *Snapshot)
@@ -128,12 +131,11 @@ func Test_listener_Run(t *testing.T) {
 						GroupAddress(7): {Export: false},
 					},
 				},
-				inbound,
 				metricsChan,
 				prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{"direction", "processed"}),
 			)
 
-			go l.Run()
+			go l.Run(ctx, inbound)
 			inbound <- tt.event
 
 			select {
@@ -142,7 +144,7 @@ func Test_listener_Run(t *testing.T) {
 				got.timestamp = time.Unix(0, 0)
 				tt.want.timestamp = time.Unix(0, 0)
 				assert.Equal(t, tt.want, got)
-			case <-time.After(10 * time.Millisecond):
+			case <-ctx.Done():
 				assert.True(t, tt.wantError, "got no metrics snapshot but requires one")
 			}
 			close(inbound)

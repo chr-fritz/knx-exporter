@@ -19,6 +19,7 @@
 package knx
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -58,18 +59,6 @@ func (m *MockMetricSnapshotHandler) AddSnapshot(snapshot *Snapshot) {
 func (mr *MockMetricSnapshotHandlerMockRecorder) AddSnapshot(snapshot interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSnapshot", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).AddSnapshot), snapshot)
-}
-
-// Close mocks base method.
-func (m *MockMetricSnapshotHandler) Close() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Close")
-}
-
-// Close indicates an expected call of Close.
-func (mr *MockMetricSnapshotHandlerMockRecorder) Close() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).Close))
 }
 
 // Collect mocks base method.
@@ -154,13 +143,13 @@ func (mr *MockMetricSnapshotHandlerMockRecorder) IsActive() *gomock.Call {
 }
 
 // Run mocks base method.
-func (m *MockMetricSnapshotHandler) Run() {
+func (m *MockMetricSnapshotHandler) Run(ctx context.Context) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Run")
+	m.ctrl.Call(m, "Run", ctx)
 }
 
 // Run indicates an expected call of Run.
-func (mr *MockMetricSnapshotHandlerMockRecorder) Run() *gomock.Call {
+func (mr *MockMetricSnapshotHandlerMockRecorder) Run(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).Run))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockMetricSnapshotHandler)(nil).Run), ctx)
 }

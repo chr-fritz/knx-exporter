@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package knx
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -27,6 +28,8 @@ import (
 func TestNewMetricsExporter(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	ctx, cancelFunc := context.WithCancel(context.TODO())
+
 	exporter := fake.NewMockExporter(ctrl)
 	exporter.EXPECT().Register(gomock.Any()).AnyTimes()
 	exp, err := NewMetricsExporter("fixtures/readConfig.yaml", exporter)
@@ -34,7 +37,7 @@ func TestNewMetricsExporter(t *testing.T) {
 	assert.True(t, ok)
 	assert.NoError(t, err)
 
-	err = metricsExporter.Run()
+	err = metricsExporter.Run(ctx)
 	assert.NoError(t, err)
 
 	assert.NotNil(t, metricsExporter.metrics)
@@ -42,8 +45,7 @@ func TestNewMetricsExporter(t *testing.T) {
 	assert.NotNil(t, metricsExporter.listener)
 
 	time.Sleep(1 * time.Second)
-
-	metricsExporter.Close()
+	cancelFunc()
 }
 
 func TestMetricsExporter_createClient(t *testing.T) {

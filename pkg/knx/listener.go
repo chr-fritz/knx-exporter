@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package knx
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"math"
@@ -27,23 +28,21 @@ import (
 )
 
 type Listener interface {
-	Run()
+	Run(ctx context.Context, inbound <-chan knx.GroupEvent)
 	IsActive() bool
 }
 
 type listener struct {
 	config         *Config
-	inbound        <-chan knx.GroupEvent
 	metricsChan    chan *Snapshot
 	messageCounter *prometheus.CounterVec
 	active         bool
 	logger         *slog.Logger
 }
 
-func NewListener(config *Config, inbound <-chan knx.GroupEvent, metricsChan chan *Snapshot, messageCounter *prometheus.CounterVec) Listener {
+func NewListener(config *Config, metricsChan chan *Snapshot, messageCounter *prometheus.CounterVec) Listener {
 	return &listener{
 		config:         config,
-		inbound:        inbound,
 		metricsChan:    metricsChan,
 		messageCounter: messageCounter,
 		active:         true,
@@ -54,15 +53,21 @@ func NewListener(config *Config, inbound <-chan knx.GroupEvent, metricsChan chan
 	}
 }
 
-func (l *listener) Run() {
+func (l *listener) Run(ctx context.Context, inbound <-chan knx.GroupEvent) {
 	l.logger.Info("Waiting for incoming knx telegrams...")
 	defer func() {
 		l.active = false
+		l.logger.Warn("Finished listening for incoming knx telegrams")
+		ctx.Err()
 	}()
-	for msg := range l.inbound {
-		l.handleEvent(msg)
+	for {
+		select {
+		case msg := <-inbound:
+			l.handleEvent(msg)
+		case <-ctx.Done():
+			break
+		}
 	}
-	l.logger.Warn("Finished listening for incoming knx telegrams")
 }
 
 func (l *listener) IsActive() bool {

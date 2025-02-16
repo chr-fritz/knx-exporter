@@ -28,9 +28,7 @@ import (
 // Poller defines the interface for active polling for metrics values against the knx system.
 type Poller interface {
 	// Run starts the polling.
-	Run()
-	// Close stops the polling.
-	Close()
+	Run(ctx context.Context, client GroupClient, initialReading bool)
 }
 
 type poller struct {
@@ -44,11 +42,10 @@ type poller struct {
 }
 
 // NewPoller creates a new Poller instance using the given MetricsExporter for connection handling and metrics observing.
-func NewPoller(config *Config, client GroupClient, metricsHandler MetricSnapshotHandler, messageCounter *prometheus.CounterVec) Poller {
+func NewPoller(config *Config, metricsHandler MetricSnapshotHandler, messageCounter *prometheus.CounterVec) Poller {
 	metricsToPoll := getMetricsToPoll(config)
 	interval := calcPollingInterval(metricsToPoll)
 	return &poller{
-		client:          client,
 		config:          config,
 		messageCounter:  messageCounter,
 		pollingInterval: interval,
@@ -57,11 +54,11 @@ func NewPoller(config *Config, client GroupClient, metricsHandler MetricSnapshot
 	}
 }
 
-func (p *poller) Run() {
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	p.cancelFunc = cancelFunc
-
-	go p.runInitialReading(ctx)
+func (p *poller) Run(ctx context.Context, client GroupClient, initialReading bool) {
+	p.client = client
+	if initialReading {
+		go p.runInitialReading(ctx)
+	}
 	go p.runPolling(ctx)
 }
 
@@ -100,10 +97,6 @@ func (p *poller) runPolling(ctx context.Context) {
 			return
 		}
 	}
-}
-
-func (p *poller) Close() {
-	p.cancelFunc()
 }
 
 func (p *poller) pollAddresses(t time.Time) {

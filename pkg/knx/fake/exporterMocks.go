@@ -1,4 +1,4 @@
-// Copyright © 2022 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2022-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 package fake
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -47,18 +48,6 @@ func (m *MockMetricsExporter) EXPECT() *MockMetricsExporterMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method.
-func (m *MockMetricsExporter) Close() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Close")
-}
-
-// Close indicates an expected call of Close.
-func (mr *MockMetricsExporterMockRecorder) Close() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockMetricsExporter)(nil).Close))
-}
-
 // IsAlive mocks base method.
 func (m *MockMetricsExporter) IsAlive() error {
 	m.ctrl.T.Helper()
@@ -74,15 +63,15 @@ func (mr *MockMetricsExporterMockRecorder) IsAlive() *gomock.Call {
 }
 
 // Run mocks base method.
-func (m *MockMetricsExporter) Run() error {
+func (m *MockMetricsExporter) Run(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Run")
+	ret := m.ctrl.Call(m, "Run", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Run indicates an expected call of Run.
-func (mr *MockMetricsExporterMockRecorder) Run() *gomock.Call {
+func (mr *MockMetricsExporterMockRecorder) Run(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockMetricsExporter)(nil).Run))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockMetricsExporter)(nil).Run), ctx)
 }

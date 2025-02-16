@@ -15,6 +15,7 @@
 package knx
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -148,6 +149,8 @@ func Test_calcPollingInterval(t *testing.T) {
 func TestPoller_Polling(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), 6*time.Second)
+	defer cancelFunc()
 
 	groupClient := NewMockGroupClient(ctrl)
 	mockSnapshotHandler := NewMockMetricSnapshotHandler(ctrl)
@@ -214,9 +217,7 @@ func TestPoller_Polling(t *testing.T) {
 		Command: knx.GroupWrite, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 6), Data: []byte{1},
 	}).Times(1)
 
-	p := NewPoller(config, groupClient, mockSnapshotHandler, messageCounter)
-	p.Run()
+	p := NewPoller(config, mockSnapshotHandler, messageCounter)
+	p.Run(ctx, groupClient, true)
 	time.Sleep(5500 * time.Millisecond)
-
-	p.Close()
 }

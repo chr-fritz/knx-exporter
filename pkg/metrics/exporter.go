@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 package metrics
 
 //go:generate mockgen -destination=fake/exporterMocks.go -package=fake -source=exporter.go
-
 import (
 	"context"
 	"fmt"
@@ -35,8 +34,7 @@ type exporter struct {
 }
 
 type Exporter interface {
-	Run() error
-	Shutdown() error
+	Run(ctx context.Context) error
 	MustRegister(collectors ...prometheus.Collector)
 	Register(collector prometheus.Collector) error
 	Unregister(collector prometheus.Collector) bool
@@ -57,7 +55,7 @@ func NewExporter(port uint16, withGoMetrics bool) Exporter {
 	}
 }
 
-func (e exporter) Run() error {
+func (e exporter) Run(ctx context.Context) error {
 	server := http.NewServeMux()
 
 	server.HandleFunc("/live", e.health.LiveEndpoint)
@@ -67,11 +65,24 @@ func (e exporter) Run() error {
 	_, _ = daemon.SdNotify(false, daemon.SdNotifyReady)
 
 	e.server.Handler = server
-	return e.server.ListenAndServe()
-}
-func (e exporter) Shutdown() error {
-	ctx := context.Background()
-	return e.server.Shutdown(ctx)
+
+	srvErr := make(chan error, 1)
+	go func() {
+		srvErr <- e.server.ListenAndServe()
+	}()
+	var err error
+	// Wait for interruption.
+	select {
+	case err = <-srvErr:
+		// Error when starting HTTP server.
+		return err
+	case <-ctx.Done():
+		// Wait for first CTRL+C.
+		// Stop receiving signal notifications as soon as possible.
+	}
+
+	// When Shutdown is called, ListenAndServe immediately returns ErrServerClosed.
+	return e.server.Shutdown(context.Background())
 }
 
 func (e exporter) MustRegister(collectors ...prometheus.Collector) {

@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -78,26 +79,26 @@ func NewRunCommand() *cobra.Command {
 }
 
 func (i *RunOptions) run(_ *cobra.Command, _ []string) {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	exporter := metrics.NewExporter(uint16(viper.GetUint(RunPortParm)), viper.GetBool(WithGoMetricsParamName))
 
 	exporter.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
-	metricsExporter, err := i.initAndRunMetricsExporter(exporter)
+	metricsExporter, err := i.initAndRunMetricsExporter(ctx, exporter)
 	if err != nil {
 		slog.Error("Unable to init metrics exporter: " + err.Error())
 		return
 	}
 
-	go i.aliveCheck(exporter, metricsExporter)
+	go i.aliveCheck(ctx, stop, metricsExporter)
 
-	defer metricsExporter.Close()
-	if err = exporter.Run(); err != nil {
+	if err = exporter.Run(ctx); err != nil {
 		slog.Error("Can not run metrics exporter: " + err.Error())
 	}
 }
 
-func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.MetricsExporter) {
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+func (i *RunOptions) aliveCheck(ctx context.Context, cancelFunc context.CancelFunc, metricsExporter knx.MetricsExporter) {
 	ticker := time.NewTicker(i.aliveCheckInterval)
 	for {
 		select {
@@ -107,27 +108,23 @@ func (i *RunOptions) aliveCheck(exporter metrics.Exporter, metricsExporter knx.M
 				_, _ = daemon.SdNotify(false, "STATUS=Metrics Exporter is not alive anymore: "+aliveErr.Error())
 				_, _ = daemon.SdNotify(false, "ERROR=1")
 				if viper.GetString(RunRestartParm) == "exit" {
-					stop <- os.Interrupt
+					cancelFunc()
 				}
 			}
-		case <-stop:
-			err := exporter.Shutdown()
-			if err != nil {
-				slog.Warn("Shutdown failed: " + err.Error())
-			}
-			return
+		case <-ctx.Done():
+			cancelFunc()
 		}
 	}
 }
 
-func (i *RunOptions) initAndRunMetricsExporter(exporter metrics.Exporter) (knx.MetricsExporter, error) {
+func (i *RunOptions) initAndRunMetricsExporter(ctx context.Context, exporter metrics.Exporter) (knx.MetricsExporter, error) {
 	metricsExporter, err := knx.NewMetricsExporter(viper.GetString(RunConfigFileParm), exporter)
 	if err != nil {
 		return nil, err
 	}
 
 	exporter.AddLivenessCheck("knxConnection", metricsExporter.IsAlive)
-	if e := metricsExporter.Run(); e != nil {
+	if e := metricsExporter.Run(ctx); e != nil {
 		return nil, e
 	}
 
