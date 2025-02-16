@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,6 +65,61 @@ func Test_getMetricsToPoll(t *testing.T) {
 	}
 }
 
+func Test_getMetricsToRead(t *testing.T) {
+
+	tests := []struct {
+		name   string
+		config *Config
+		want   GroupAddressConfigSet
+	}{
+		{
+			"empty",
+			&Config{AddressConfigs: GroupAddressConfigSet{}},
+			GroupAddressConfigSet{},
+		},
+		{
+			"single-no-export-no-startup-read",
+			&Config{AddressConfigs: GroupAddressConfigSet{0: &GroupAddressConfig{ReadStartup: false, Export: false}}},
+			GroupAddressConfigSet{},
+		},
+		{
+			"single-no-export-startup-read",
+			&Config{AddressConfigs: GroupAddressConfigSet{0: &GroupAddressConfig{Export: false, ReadStartup: true}}},
+			GroupAddressConfigSet{},
+		},
+		{
+			"single-export-no-startup-read",
+			&Config{AddressConfigs: GroupAddressConfigSet{0: &GroupAddressConfig{Export: true, ReadStartup: false}}},
+			GroupAddressConfigSet{},
+		},
+		{
+			"single-export-startup-read",
+			&Config{AddressConfigs: GroupAddressConfigSet{0: &GroupAddressConfig{Export: true, ReadStartup: true}}},
+			GroupAddressConfigSet{0: &GroupAddressConfig{ReadStartup: true}},
+		},
+		{
+			"multiple-export-startup-read",
+			&Config{AddressConfigs: GroupAddressConfigSet{
+				0: &GroupAddressConfig{Export: false, ReadStartup: false},
+				1: &GroupAddressConfig{Export: true, ReadStartup: false},
+				2: &GroupAddressConfig{Export: false, ReadStartup: true},
+				3: &GroupAddressConfig{Export: true, ReadStartup: true},
+				4: &GroupAddressConfig{Export: true, ReadStartup: true},
+			}},
+			GroupAddressConfigSet{
+				3: &GroupAddressConfig{ReadStartup: true},
+				4: &GroupAddressConfig{ReadStartup: true},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getMetricsToRead(tt.config)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_calcPollingInterval(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -90,7 +145,7 @@ func Test_calcPollingInterval(t *testing.T) {
 	}
 }
 
-func TestPoller(t *testing.T) {
+func TestPoller_Polling(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -126,6 +181,25 @@ func TestPoller(t *testing.T) {
 			timestamp: time.Now().Add(-16 * time.Second),
 			config:    &GroupAddressConfig{},
 		})
+
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 1),
+	}).Times(1)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 2),
+	}).Times(1)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 3),
+	}).Times(1)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 4),
+	}).Times(0)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 5),
+	}).Times(0)
+	groupClient.EXPECT().Send(knx.GroupEvent{
+		Command: knx.GroupWrite, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 6), Data: []byte{1},
+	}).Times(1)
 
 	groupClient.EXPECT().Send(knx.GroupEvent{
 		Command: knx.GroupRead, Source: cemi.NewIndividualAddr3(2, 0, 1), Destination: cemi.NewGroupAddr3(0, 0, 1),

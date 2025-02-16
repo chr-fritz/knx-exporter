@@ -37,7 +37,6 @@ type metricsExporter struct {
 	metrics        MetricSnapshotHandler
 	listener       Listener
 	messageCounter *prometheus.CounterVec
-	startupReader  StartupReader
 	poller         Poller
 	health         error
 }
@@ -70,9 +69,6 @@ func (e *metricsExporter) Run() error {
 		return err
 	}
 
-	e.startupReader = NewStartupReader(e.config, e.client, e.metrics, e.messageCounter)
-	e.startupReader.Run()
-
 	e.poller = NewPoller(e.config, e.client, e.metrics, e.messageCounter)
 	e.poller.Run()
 
@@ -84,9 +80,6 @@ func (e *metricsExporter) Run() error {
 }
 
 func (e *metricsExporter) Close() {
-	if e.startupReader != nil {
-		e.startupReader.Close()
-	}
 	if e.poller != nil {
 		e.poller.Close()
 	}

@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package knx
 
 import (
+	"context"
 	"log/slog"
 	"math"
 	"time"
@@ -39,7 +40,7 @@ type poller struct {
 	snapshotHandler MetricSnapshotHandler
 	pollingInterval time.Duration
 	metricsToPoll   GroupAddressConfigSet
-	ticker          *time.Ticker
+	cancelFunc      context.CancelFunc
 }
 
 // NewPoller creates a new Poller instance using the given MetricsExporter for connection handling and metrics observing.
@@ -57,23 +58,52 @@ func NewPoller(config *Config, client GroupClient, metricsHandler MetricSnapshot
 }
 
 func (p *poller) Run() {
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	p.cancelFunc = cancelFunc
+
+	go p.runInitialReading(ctx)
+	go p.runPolling(ctx)
+}
+
+func (p *poller) runInitialReading(ctx context.Context) {
+	readInterval := time.Duration(p.config.ReadStartupInterval)
+	if readInterval.Milliseconds() <= 0 {
+		readInterval = 200 * time.Millisecond
+	}
+	slog.Info("start reading addresses after startup.", "delay", readInterval)
+
+	metricsToRead := getMetricsToRead(p.config)
+	ticker := time.NewTicker(readInterval)
+	for address, config := range metricsToRead {
+		select {
+		case <-ticker.C:
+			p.sendReadMessage(address, config)
+		case <-ctx.Done():
+			break
+		}
+	}
+	ticker.Stop()
+}
+
+func (p *poller) runPolling(ctx context.Context) {
 	if p.pollingInterval <= 0 {
 		return
 	}
 	slog.Log(nil, slog.LevelDebug-2, "Start polling group addresses", "pollingInterval", p.pollingInterval)
-	p.ticker = time.NewTicker(p.pollingInterval)
-	c := p.ticker.C
-	go func() {
-		for t := range c {
+	ticker := time.NewTicker(p.pollingInterval)
+	for {
+		select {
+		case t := <-ticker.C:
 			p.pollAddresses(t)
+		case <-ctx.Done():
+			ticker.Stop()
+			return
 		}
-	}()
+	}
 }
 
 func (p *poller) Close() {
-	if p.ticker != nil {
-		p.ticker.Stop()
-	}
+	p.cancelFunc()
 }
 
 func (p *poller) pollAddresses(t time.Time) {
@@ -117,6 +147,24 @@ func (p *poller) sendReadMessage(address GroupAddress, config *GroupAddressConfi
 		slog.Info("Can not send read request: "+e.Error(), "address", address.String())
 	}
 	p.messageCounter.WithLabelValues("sent", "true").Inc()
+}
+
+func getMetricsToRead(config *Config) GroupAddressConfigSet {
+	toRead := make(GroupAddressConfigSet)
+	for address, addressConfig := range config.AddressConfigs {
+		if !addressConfig.Export || !addressConfig.ReadStartup {
+			continue
+		}
+
+		toRead[address] = &GroupAddressConfig{
+			Name:        config.NameFor(addressConfig),
+			ReadStartup: true,
+			ReadType:    addressConfig.ReadType,
+			ReadAddress: addressConfig.ReadAddress,
+			ReadBody:    addressConfig.ReadBody,
+		}
+	}
+	return toRead
 }
 
 func getMetricsToPoll(config *Config) GroupAddressConfigSet {
