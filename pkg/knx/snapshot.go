@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,7 @@ package knx
 //go:generate mockgen -destination=snapshotMocks_test.go -package=knx -self_package=github.com/chr-fritz/knx-exporter/pkg/knx -source=snapshot.go
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"log/slog"
-	"math"
 	"strings"
 	"sync"
 	"time"
@@ -31,6 +27,8 @@ import (
 
 // MetricSnapshotHandler holds and manages all the snapshots of metrics.
 type MetricSnapshotHandler interface {
+	prometheus.Collector
+
 	// AddSnapshot adds a new snapshot that should be exported as metric.
 	AddSnapshot(snapshot *Snapshot)
 	// FindSnapshot finds a given snapshot by the snapshots key.
@@ -38,8 +36,6 @@ type MetricSnapshotHandler interface {
 	// FindYoungestSnapshot finds the youngest snapshot with the given metric name.
 	// It don't matter from which device the snapshot was received.
 	FindYoungestSnapshot(name string) *Snapshot
-	// GetValueFunc returns a function that returns the current value for the given snapshot key.
-	GetValueFunc(key SnapshotKey) func() float64
 	// Run let the MetricSnapshotHandler listen for new snapshots on the Snapshot channel.
 	Run()
 	// GetMetricsChannel returns the channel to send new snapshots to this MetricSnapshotHandler.
@@ -50,13 +46,10 @@ type MetricSnapshotHandler interface {
 	IsActive() bool
 }
 
-type snapshotKeyLabels string
-
 // SnapshotKey identifies all the snapshots that were received from a specific device and exported with the specific name.
 type SnapshotKey struct {
-	name   string
 	source PhysicalAddress
-	labels snapshotKeyLabels
+	target GroupAddress
 }
 
 // Snapshot stores all information about a single metric snapshot.
@@ -70,63 +63,43 @@ type Snapshot struct {
 }
 
 type metricSnapshots struct {
-	lock        sync.RWMutex
-	snapshots   map[SnapshotKey]snapshot
-	registerer  prometheus.Registerer
-	metricsChan chan *Snapshot
-	active      bool
+	lock         sync.RWMutex
+	snapshots    map[SnapshotKey]*Snapshot
+	descriptions map[SnapshotKey]*prometheus.Desc
+	metricsChan  chan *Snapshot
+	active       bool
 }
 
-type snapshot struct {
-	snapshot *Snapshot
-	metric   prometheus.Collector
-}
-
-func NewMetricsSnapshotHandler(registerer prometheus.Registerer) MetricSnapshotHandler {
+func NewMetricsSnapshotHandler() MetricSnapshotHandler {
 	return &metricSnapshots{
-		lock:        sync.RWMutex{},
-		snapshots:   make(map[SnapshotKey]snapshot),
-		registerer:  registerer,
-		metricsChan: make(chan *Snapshot),
-		active:      true,
+		lock:         sync.RWMutex{},
+		snapshots:    make(map[SnapshotKey]*Snapshot),
+		descriptions: make(map[SnapshotKey]*prometheus.Desc),
+		metricsChan:  make(chan *Snapshot),
+		active:       true,
 	}
 }
 
 func (m *metricSnapshots) AddSnapshot(s *Snapshot) {
-	key := s.GetKey()
+	key := s.getKey()
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	meta, ok := m.snapshots[key]
-	logger := slog.With(
-		"metricName", s.name,
-		"source", s.source,
-	)
+	_, ok := m.descriptions[key]
 
-	if ok {
-		meta.snapshot = s
-	} else {
-		metric, err := createMetric(s, m.GetValueFunc(key))
-		if err != nil {
-			logger.Warn(err.Error())
-			return
-		}
-		meta = snapshot{snapshot: s, metric: metric}
-		err = m.registerer.Register(meta.metric)
-		if err != nil && !errors.Is(err, prometheus.AlreadyRegisteredError{}) {
-			logger.Warn("Can not register new metric: " + err.Error())
-		}
+	if !ok {
+		m.descriptions[key] = createMetric(s)
 	}
-	m.snapshots[key] = meta
+	m.snapshots[key] = s
 }
 
 func (m *metricSnapshots) FindSnapshot(key SnapshotKey) (*Snapshot, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
-	meta, ok := m.snapshots[key]
+	snapshot, ok := m.snapshots[key]
 	if !ok {
-		return nil, fmt.Errorf("no snapshot for %s from %s found", key.name, key.source.String())
+		return nil, fmt.Errorf("no snapshot for %s from %s found", key.target.String(), key.source.String())
 	}
-	return meta.snapshot, nil
+	return snapshot, nil
 }
 
 func (m *metricSnapshots) FindYoungestSnapshot(name string) *Snapshot {
@@ -135,28 +108,18 @@ func (m *metricSnapshots) FindYoungestSnapshot(name string) *Snapshot {
 
 	var youngest *Snapshot
 	for _, s := range m.snapshots {
-		if s.snapshot.name != name {
+		if s.name != name {
 			continue
 		}
 		if youngest == nil {
-			youngest = s.snapshot
+			youngest = s
 			continue
 		}
-		if youngest.timestamp.Before(s.snapshot.timestamp) {
-			youngest = s.snapshot
+		if youngest.timestamp.Before(s.timestamp) {
+			youngest = s
 		}
 	}
 	return youngest
-}
-
-func (m *metricSnapshots) GetValueFunc(key SnapshotKey) func() float64 {
-	return func() float64 {
-		s, err := m.FindSnapshot(key)
-		if err != nil {
-			return math.NaN()
-		}
-		return s.value
-	}
 }
 
 func (m *metricSnapshots) Run() {
@@ -178,45 +141,40 @@ func (m *metricSnapshots) GetMetricsChannel() chan *Snapshot {
 	return m.metricsChan
 }
 
-func (s *Snapshot) GetKey() SnapshotKey {
-	var labels []byte = nil
-	if s.config.Labels != nil {
-		var e error
-		labels, e = json.Marshal(s.config.Labels)
-		if e != nil {
-			panic("can not create labels key")
-		}
-	}
-	return SnapshotKey{
-		name:   s.name,
-		source: s.source,
-		labels: snapshotKeyLabels(labels),
+func (m *metricSnapshots) Describe(ch chan<- *prometheus.Desc) {
+	for _, d := range m.descriptions {
+		ch <- d
 	}
 }
 
-func createMetric(s *Snapshot, getter func() float64) (prometheus.Collector, error) {
-	var metric prometheus.Collector
-
-	if strings.ToLower(s.config.MetricType) == "counter" {
-		metric = prometheus.NewCounterFunc(
-			prometheus.CounterOpts{
-				Name:        s.name,
-				ConstLabels: getSnapshotLabels(s),
-			},
-			getter,
-		)
-	} else if strings.ToLower(s.config.MetricType) == "gauge" {
-		metric = prometheus.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name:        s.name,
-				ConstLabels: getSnapshotLabels(s),
-			},
-			getter,
-		)
-	} else {
-		return nil, fmt.Errorf("can not create metric '%s' for metric typ '%s'", s.name, s.config.MetricType)
+func (m *metricSnapshots) Collect(metrics chan<- prometheus.Metric) {
+	for k, s := range m.snapshots {
+		if s.config.WithTimestamp {
+			metrics <- prometheus.NewMetricWithTimestamp(s.timestamp, prometheus.MustNewConstMetric(m.descriptions[k], s.getValuetype(), s.value))
+		} else {
+			metrics <- prometheus.MustNewConstMetric(m.descriptions[k], s.getValuetype(), s.value)
+		}
 	}
-	return metric, nil
+}
+
+func (s *Snapshot) getKey() SnapshotKey {
+	return SnapshotKey{
+		source: s.source,
+		target: s.destination,
+	}
+}
+
+func (s *Snapshot) getValuetype() prometheus.ValueType {
+	if strings.ToLower(s.config.MetricType) == "counter" {
+		return prometheus.CounterValue
+	} else if strings.ToLower(s.config.MetricType) == "gauge" {
+		return prometheus.GaugeValue
+	}
+	return prometheus.UntypedValue
+}
+
+func createMetric(s *Snapshot) *prometheus.Desc {
+	return prometheus.NewDesc(s.name, s.config.Comment, []string{}, getSnapshotLabels(s))
 }
 
 // getSnapshotLabels returns a full list of all labels that should be added to the given metric.

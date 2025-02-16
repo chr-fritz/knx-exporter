@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,13 +49,18 @@ func NewMetricsExporter(configFile string, registerer prometheus.Registerer) (Me
 	}
 	m := &metricsExporter{
 		config:  config,
-		metrics: NewMetricsSnapshotHandler(registerer),
+		metrics: NewMetricsSnapshotHandler(),
 		messageCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name:      "messages",
 			Namespace: "knx",
 		}, []string{"direction", "processed"}),
 	}
-	_ = registerer.Register(m.messageCounter)
+	if err = registerer.Register(m.messageCounter); err != nil {
+		return nil, fmt.Errorf("can not register message counter metrics: %s", err)
+	}
+	if err = registerer.Register(m.metrics); err != nil {
+		return nil, fmt.Errorf("can not register metrics collector: %s", err)
+	}
 	return m, nil
 }
 

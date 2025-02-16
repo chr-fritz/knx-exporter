@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -248,6 +248,8 @@ type GroupAddressConfig struct {
 	MaxAge Duration `json:",omitempty"`
 	// Labels defines static labels that should be set when exporting the metric using prometheus.
 	Labels map[string]string `json:",omitempty"`
+	// WithTimestamp defines if the exported metric should include the timestamp of receiving the last value.
+	WithTimestamp bool
 }
 
 // GroupAddressConfigSet is a shortcut type for the group address config map.

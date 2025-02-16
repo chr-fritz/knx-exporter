@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 package knx
 
 import (
-	"math"
 	"sync"
 	"testing"
 	"time"
@@ -23,21 +22,19 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/chr-fritz/knx-exporter/pkg/metrics/fake"
 )
 
-func TestSnapshot_GetKey(t *testing.T) {
+func TestSnapshot_getKey(t *testing.T) {
 	tests := []struct {
 		name     string
 		snapshot *Snapshot
 		want     SnapshotKey
 	}{
-		{"ok", &Snapshot{name: "metricName", source: 1, config: &GroupAddressConfig{Labels: nil}}, SnapshotKey{name: "metricName", source: 1}},
+		{"ok", &Snapshot{name: "metricName", source: 1, config: &GroupAddressConfig{Labels: nil}, destination: 1}, SnapshotKey{target: 1, source: 1}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.snapshot.GetKey()
+			got := tt.snapshot.getKey()
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -51,24 +48,21 @@ func Test_metricSnapshots_AddSnapshot(t *testing.T) {
 		key          SnapshotKey
 		wantRegister int
 	}{
-		{"new counter", &Snapshot{name: "a", source: 1, config: &GroupAddressConfig{MetricType: "counter"}}, SnapshotKey{name: "a", source: 1}, 1},
-		{"new gauge", &Snapshot{name: "b", source: 1, config: &GroupAddressConfig{MetricType: "gauge", Labels: map[string]string{"room": "office"}}}, SnapshotKey{name: "b", source: 1, labels: snapshotKeyLabels("{\"room\":\"office\"}")}, 1},
-		{"update", &Snapshot{name: "c", source: 1, config: &GroupAddressConfig{MetricType: "gauge"}}, SnapshotKey{name: "c", source: 1}, 0},
+		{"new counter", &Snapshot{name: "a", source: 1, destination: 1, config: &GroupAddressConfig{MetricType: "counter"}}, SnapshotKey{target: 1, source: 1}, 1},
+		{"new gauge", &Snapshot{name: "b", source: 1, destination: 2, config: &GroupAddressConfig{MetricType: "gauge", Labels: map[string]string{"room": "office"}}}, SnapshotKey{target: 2, source: 1}, 1},
+		{"update", &Snapshot{name: "c", source: 1, destination: 3, config: &GroupAddressConfig{MetricType: "gauge"}}, SnapshotKey{target: 3, source: 1}, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			exporter := fake.NewMockExporter(ctrl)
-			exporter.EXPECT().Register(gomock.Any()).Times(tt.wantRegister)
-			handler := NewMetricsSnapshotHandler(exporter)
+			handler := NewMetricsSnapshotHandler()
 			snapshots := handler.(*metricSnapshots)
-			snapshots.snapshots[SnapshotKey{name: "c", source: 1}] = snapshot{metric: prometheus.NewCounter(prometheus.CounterOpts{})}
+			snapshots.descriptions[SnapshotKey{source: 1, target: 3}] = prometheus.NewDesc("", "", []string{}, map[string]string{})
 			handler.AddSnapshot(tt.s)
+			assert.NotNil(t, snapshots.descriptions[tt.key])
 			assert.NotNil(t, snapshots.snapshots[tt.key])
-			assert.NotNil(t, snapshots.snapshots[tt.key].snapshot)
-			assert.NotNil(t, snapshots.snapshots[tt.key].metric)
 		})
 	}
 }
@@ -76,39 +70,39 @@ func Test_metricSnapshots_AddSnapshot(t *testing.T) {
 func Test_metricSnapshots_FindSnapshot(t *testing.T) {
 	tests := []struct {
 		name              string
-		existingSnapshots map[SnapshotKey]snapshot
+		existingSnapshots map[SnapshotKey]*Snapshot
 		key               SnapshotKey
 		want              *Snapshot
 		wantErr           bool
 	}{
 		{
 			"found",
-			map[SnapshotKey]snapshot{SnapshotKey{name: "found"}: {snapshot: &Snapshot{name: "found"}}},
-			SnapshotKey{name: "found"},
+			map[SnapshotKey]*Snapshot{SnapshotKey{source: 1, target: 2}: {name: "found"}},
+			SnapshotKey{source: 1, target: 2},
 			&Snapshot{name: "found"},
 			false},
 		{
 			"found two devs",
-			map[SnapshotKey]snapshot{
-				SnapshotKey{name: "found", source: 1}: {snapshot: &Snapshot{name: "found", source: 1}},
-				SnapshotKey{name: "found", source: 2}: {snapshot: &Snapshot{name: "found", source: 2}},
+			map[SnapshotKey]*Snapshot{
+				SnapshotKey{source: 1, target: 1}: {name: "found", source: 1},
+				SnapshotKey{source: 2, target: 1}: {name: "found", source: 2},
 			},
-			SnapshotKey{name: "found", source: 1},
+			SnapshotKey{source: 1, target: 1},
 			&Snapshot{name: "found", source: 1},
 			false},
 		{
 			"found one dev",
-			map[SnapshotKey]snapshot{
-				SnapshotKey{name: "found1", source: 1}: {snapshot: &Snapshot{name: "found1", source: 1}},
-				SnapshotKey{name: "found2", source: 1}: {snapshot: &Snapshot{name: "found2", source: 1}},
+			map[SnapshotKey]*Snapshot{
+				SnapshotKey{source: 1, target: 1}: {name: "found1", source: 1},
+				SnapshotKey{source: 1, target: 2}: {name: "found2", source: 1},
 			},
-			SnapshotKey{name: "found1", source: 1},
+			SnapshotKey{source: 1, target: 1},
 			&Snapshot{name: "found1", source: 1},
 			false},
 		{
 			"no snapshots",
-			map[SnapshotKey]snapshot{},
-			SnapshotKey{name: "wanted"},
+			map[SnapshotKey]*Snapshot{},
+			SnapshotKey{source: 2, target: 1},
 			nil,
 			true},
 	}
@@ -132,37 +126,37 @@ func Test_metricSnapshots_FindYoungestSnapshot(t *testing.T) {
 	testTime := time.Now()
 	tests := []struct {
 		name              string
-		existingSnapshots map[SnapshotKey]snapshot
+		existingSnapshots map[SnapshotKey]*Snapshot
 		metricName        string
 		want              *Snapshot
 	}{
 		{
 			"no snapshots",
-			map[SnapshotKey]snapshot{},
+			map[SnapshotKey]*Snapshot{},
 			"metric",
 			nil,
 		},
 		{
 			"one snapshot",
-			map[SnapshotKey]snapshot{SnapshotKey{name: "a", source: 1}: {snapshot: &Snapshot{name: "a", source: 1}}},
+			map[SnapshotKey]*Snapshot{SnapshotKey{source: 1, target: 1}: {name: "a", source: 1}},
 			"a",
 			&Snapshot{name: "a", source: 1},
 		},
 		{
 			"two dev",
-			map[SnapshotKey]snapshot{
-				SnapshotKey{name: "a", source: 1}: {snapshot: &Snapshot{name: "a", source: 1, timestamp: testTime}},
-				SnapshotKey{name: "a", source: 2}: {snapshot: &Snapshot{name: "a", source: 2, timestamp: testTime.Add(-10 * time.Second)}},
-				SnapshotKey{name: "a", source: 3}: {snapshot: &Snapshot{name: "a", source: 3, timestamp: testTime.Add(-20 * time.Second)}},
+			map[SnapshotKey]*Snapshot{
+				SnapshotKey{source: 1, target: 1}: {name: "a", source: 1, timestamp: testTime},
+				SnapshotKey{source: 2, target: 1}: {name: "a", source: 2, timestamp: testTime.Add(-10 * time.Second)},
+				SnapshotKey{source: 3, target: 1}: {name: "a", source: 3, timestamp: testTime.Add(-20 * time.Second)},
 			},
 			"a",
 			&Snapshot{name: "a", source: 1, timestamp: testTime},
 		},
 		{
 			"two metrics",
-			map[SnapshotKey]snapshot{
-				SnapshotKey{name: "a", source: 1}: {snapshot: &Snapshot{name: "a", source: 1}},
-				SnapshotKey{name: "b", source: 1}: {snapshot: &Snapshot{name: "b", source: 1}},
+			map[SnapshotKey]*Snapshot{
+				SnapshotKey{source: 1, target: 1}: {name: "a", source: 1},
+				SnapshotKey{source: 1, target: 2}: {name: "b", source: 1},
 			},
 			"a",
 			&Snapshot{name: "a", source: 1},
@@ -180,42 +174,108 @@ func Test_metricSnapshots_FindYoungestSnapshot(t *testing.T) {
 	}
 }
 
-func Test_metricSnapshots_GetValueFunc(t *testing.T) {
+func Test_metricSnapshots_Describe(t *testing.T) {
 	tests := []struct {
-		name      string
-		snapshots map[SnapshotKey]snapshot
-		key       SnapshotKey
-		want      float64
+		name         string
+		snapshots    []*Snapshot
+		expectedDesc []*prometheus.Desc
 	}{
-		{
-			"ok",
-			map[SnapshotKey]snapshot{
-				SnapshotKey{name: "a", source: 1}: {snapshot: &Snapshot{name: "a", source: 1, value: 1.5}},
+		{"no snapshots", []*Snapshot{}, []*prometheus.Desc{}},
+		{"single snapshots",
+			[]*Snapshot{{name: "dummy", value: 1, source: 1, config: &GroupAddressConfig{Comment: "abc"}}},
+			[]*prometheus.Desc{
+				prometheus.NewDesc("dummy", "abc", []string{}, map[string]string{"physicalAddress": "0.0.1"}),
 			},
-			SnapshotKey{name: "a", source: 1},
-			1.5,
 		},
 		{
-			"not found",
-			map[SnapshotKey]snapshot{
-				SnapshotKey{name: "a", source: 1}: {snapshot: &Snapshot{name: "a", source: 1, value: 1.5}},
+			"two different snapshots",
+			[]*Snapshot{
+				{name: "dummy", value: 1, source: 1, config: &GroupAddressConfig{}},
+				{name: "dummy1", value: 2, source: 2, config: &GroupAddressConfig{Labels: map[string]string{"room": "outside"}}},
 			},
-			SnapshotKey{name: "b", source: 1},
-			math.NaN(),
+			[]*prometheus.Desc{
+				prometheus.NewDesc("dummy", "", []string{}, map[string]string{"physicalAddress": "0.0.1"}),
+				prometheus.NewDesc("dummy1", "", []string{}, map[string]string{"physicalAddress": "0.0.2", "room": "outside"}),
+			},
+		},
+		{
+			"duplicate snapshots",
+			[]*Snapshot{
+				{name: "dummy", value: 1, source: 1, config: &GroupAddressConfig{}},
+				{name: "dummy", value: 2, source: 1, config: &GroupAddressConfig{}},
+			},
+			[]*prometheus.Desc{
+				prometheus.NewDesc("dummy", "", []string{}, map[string]string{"physicalAddress": "0.0.1"}),
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &metricSnapshots{
-				lock:      sync.RWMutex{},
-				snapshots: tt.snapshots,
+			handler := NewMetricsSnapshotHandler()
+			for _, snapshot := range tt.snapshots {
+				handler.AddSnapshot(snapshot)
 			}
-			value := m.GetValueFunc(tt.key)()
-			if !math.IsNaN(tt.want) {
-				assert.Equal(t, tt.want, value)
-			} else {
-				assert.True(t, math.IsNaN(value))
+
+			ch := make(chan *prometheus.Desc)
+			actualDesc := make([]*prometheus.Desc, 0)
+			go func() {
+				for desc := range ch {
+					actualDesc = append(actualDesc, desc)
+				}
+			}()
+
+			handler.Describe(ch)
+			time.Sleep(100 * time.Millisecond)
+			close(ch)
+			assert.Equal(t, tt.expectedDesc, actualDesc)
+		})
+	}
+}
+
+func Test_metricSnapshots_Collect(t *testing.T) {
+	testTime := time.Now()
+	tests := []struct {
+		name      string
+		snapshots []*Snapshot
+		metrics   []prometheus.Metric
+	}{
+		{"no metrics", []*Snapshot{}, []prometheus.Metric{}},
+		{"single counter metric",
+			[]*Snapshot{
+				{name: "dummy", value: 1, source: 1, timestamp: testTime, config: &GroupAddressConfig{MetricType: "counter"}},
+			},
+			[]prometheus.Metric{
+				prometheus.MustNewConstMetric(prometheus.NewDesc("dummy", "", []string{}, map[string]string{"physicalAddress": "0.0.1"}), prometheus.CounterValue, 1),
+			},
+		},
+		{"single gauge timestamp metric",
+			[]*Snapshot{
+				{name: "dummy", value: 1, source: 1, timestamp: testTime, config: &GroupAddressConfig{MetricType: "gauge", WithTimestamp: true}},
+			},
+			[]prometheus.Metric{
+				prometheus.NewMetricWithTimestamp(testTime, prometheus.MustNewConstMetric(prometheus.NewDesc("dummy", "", []string{}, map[string]string{"physicalAddress": "0.0.1"}), prometheus.GaugeValue, 1)),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewMetricsSnapshotHandler()
+			for _, snapshot := range tt.snapshots {
+				handler.AddSnapshot(snapshot)
 			}
+
+			ch := make(chan prometheus.Metric)
+			actualMetrics := make([]prometheus.Metric, 0)
+			go func() {
+				for desc := range ch {
+					actualMetrics = append(actualMetrics, desc)
+				}
+			}()
+
+			handler.Collect(ch)
+			time.Sleep(100 * time.Millisecond)
+			close(ch)
+			assert.Equal(t, tt.metrics, actualMetrics)
 		})
 	}
 }
