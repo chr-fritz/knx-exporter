@@ -1,4 +1,4 @@
-// Copyright © 2020-2024 Christian Fritz <mail@chr-fritz.de>
+// Copyright © 2020-2025 Christian Fritz <mail@chr-fritz.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCmdCompletion creates the `completion` command
+// NewCompletionCmd creates the `completion` command
 func NewCompletionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "completion [bash|zsh|fish|powershell]",
