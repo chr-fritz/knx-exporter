@@ -23,7 +23,7 @@ image:
   tag: ""
 
 imagePullSecrets: [ ]
-nameOverride: "knx-exporter"
+nameOverride: ""
 fullnameOverride: ""
 
 serviceAccount:
