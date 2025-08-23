@@ -180,7 +180,7 @@ brews:
 nfpms:
   - package_name: knx-exporter
     file_name_template: "{{ .ConventionalFileName }}"
-    builds:
+    ids:
       - knx-exporter
     vendor: chr-fritz
     homepage: https://github.com/chr-fritz/knx-exporter
@@ -219,7 +219,7 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
