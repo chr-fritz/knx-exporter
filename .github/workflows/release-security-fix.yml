@@ -1,0 +1,68 @@
+name: Release security patch release
+
+on:
+  workflow_dispatch: { }
+  schedule:
+    - cron: "0 4 */2 * *"
+
+jobs:
+  release-security-patch-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          fetch-depth: '0'  # required by anothrNick/github-tag-action
+      - name: Download latest Linux release
+        uses: robinraju/release-downloader@daf26c55d821e836577a15f77d86ddc078948b05 # v1
+        with:
+          repository: ${{ github.repository }}
+          latest: true
+          fileName: '*_linux_amd64'
+          out-file-path: 'latest-release'  # auto-creates the folder
+      - name: Scan Linux release for vulnerabilities
+        id: scan_latest_release
+        uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e # v6
+        with:
+          path: "latest-release"
+          fail-build: true
+          severity-cutoff: negligible
+          output-format: table
+        continue-on-error: true
+
+      # If we found vulnerabilities, create a build for the default branch, where the vulnerabilities might be fixed
+      - name: Set up Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
+        with:
+          go-version: "1.25.1"
+        if: steps.scan_latest_release.outcome == 'failure'
+
+      - name: Verify dependencies
+        run: go mod verify
+        if: steps.scan_latest_release.outcome == 'failure'
+
+      - name: Build
+        run: mkdir latest-build && go build -o latest-build/knx-exporter main.go
+        if: steps.scan_latest_release.outcome == 'failure'
+
+      - name: Scan built Linux binary for vulnerabilities
+        id: scan_latest_build
+        uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e # v6
+        with:
+          path: "latest-build"
+          fail-build: true
+          severity-cutoff: negligible
+          output-format: table
+        continue-on-error: true
+        if: steps.scan_latest_release.outcome == 'failure'
+
+      # If the latest build has no vulnerabilities anymore, it makes sense to create a new patch-release automatically
+      - name: Bump version and push tag
+        if: steps.scan_latest_build.outcome == 'success'
+        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8 # 1.75.0
+        env:
+          # Note: we use a custom PAT, because secrets.GITHUB_TOKEN has a limitation that tags pushed with it
+          # will NOT trigger workflows that are configured for "on -> push -> tags")
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          WITH_V: true
+          DEFAULT_BUMP: "patch"
+          FORCE_WITHOUT_CHANGES: true
