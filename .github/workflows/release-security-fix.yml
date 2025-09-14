@@ -28,8 +28,10 @@ jobs:
         with:
           repository: ${{ github.repository }}
           latest: true
-          fileName: '*_linux_amd64'
+          fileName: '*_linux_amd64.tar.gz'
           out-file-path: 'latest-release'  # auto-creates the folder
+          preRelease: false
+          extract: true
       - name: Scan Linux release for vulnerabilities
         id: scan_latest_release
         uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e # v6
