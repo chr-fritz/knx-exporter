@@ -50,7 +50,6 @@ dockers:
       - knx-exporter
     use: buildx
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-x64"
     skip_push: false
     dockerfile: Dockerfile
@@ -72,7 +71,6 @@ dockers:
       - knx-exporter
     use: buildx
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm64"
     skip_push: false
     dockerfile: Dockerfile
@@ -95,7 +93,6 @@ dockers:
       - knx-exporter
     use: buildx
     image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
       - "ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}-arm7"
     skip_push: false
     dockerfile: Dockerfile
@@ -112,29 +109,6 @@ dockers:
       - pkg/.knx-exporter.yaml
       - scripts/docker/etc_passwd
 docker_manifests:
-  - name_template: "quay.io/chrfritz/knx-exporter:latest"
-    skip_push: auto
-    image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
-  - name_template: "quay.io/chrfritz/knx-exporter:{{ .Tag }}"
-    image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
-  - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}"
-    skip_push: auto
-    image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
-  - name_template: "quay.io/chrfritz/knx-exporter:v{{ .Major }}"
-    skip_push: auto
-    image_templates:
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-x64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm64"
-      - "quay.io/chrfritz/knx-exporter:{{ .Tag }}-arm7"
   - name_template: "ghcr.io/chr-fritz/knx-exporter:latest"
     skip_push: auto
     image_templates:
@@ -170,6 +144,7 @@ brews:
     description: "The KNX Prometheus Exporter is a small bridge to export values measured by KNX sensors to Prometheus."
     license: "Apache-2.0"
     skip_upload: auto
+
     test: |
       system "#{bin}/knx-exporter --version"
     install: |
@@ -236,10 +211,3 @@ release:
     * `ghcr.io/chr-fritz/knx-exporter:{{ .Tag }}`
     * `ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}.{{ .Minor }}`
     * `ghcr.io/chr-fritz/knx-exporter:v{{ .Major }}`
-
-    [quay.io/chrfritz/knx-exporter](https://quay.io/chrfritz/knx-exporter) (deprecated)
-    * `quay.io/chrfritz/knx-exporter:latest`
-    * `quay.io/chrfritz/knx-exporter:{{ .Tag }}`
-    * `quay.io/chrfritz/knx-exporter:v{{ .Major }}.{{ .Minor }}`
-    * `quay.io/chrfritz/knx-exporter:v{{ .Major }}`
-
