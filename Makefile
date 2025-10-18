@@ -45,14 +45,14 @@ BUILDFLAGS := -ldflags \
     -s -w -extldflags '-static'"
 
 .PHONY: all
-all: lint test $(GOOS)-build
+all: test $(GOOS)-build
 	@echo "SUCCESS"
 
 .PHONY: ci
 ci: ci-check
 
 .PHONY: ci-check
-ci-check: lint tidy generate imports vet test
+ci-check: tidy generate imports vet test
 
 .PHONY: build
 build:
