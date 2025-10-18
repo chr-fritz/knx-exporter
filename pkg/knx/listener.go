@@ -58,14 +58,14 @@ func (l *listener) Run(ctx context.Context, inbound <-chan knx.GroupEvent) {
 	defer func() {
 		l.active = false
 		l.logger.Warn("Finished listening for incoming knx telegrams")
-		ctx.Err()
 	}()
+loop:
 	for {
 		select {
 		case msg := <-inbound:
-			l.handleEvent(msg)
+			l.handleEvent(ctx, msg)
 		case <-ctx.Done():
-			break
+			break loop
 		}
 	}
 }
@@ -74,7 +74,7 @@ func (l *listener) IsActive() bool {
 	return l.active
 }
 
-func (l *listener) handleEvent(event knx.GroupEvent) {
+func (l *listener) handleEvent(ctx context.Context, event knx.GroupEvent) {
 	l.messageCounter.WithLabelValues("received", "false").Inc()
 	destination := GroupAddress(event.Destination)
 	logger := l.logger.With(
@@ -111,7 +111,7 @@ func (l *listener) handleEvent(event knx.GroupEvent) {
 	logger.With(
 		"metricName", metricName,
 		"value", value,
-	).Log(nil, slog.LevelDebug-2, "Processed received group address value")
+	).Log(ctx, slog.LevelDebug-2, "Processed received group address value")
 	l.metricsChan <- &Snapshot{
 		name:        metricName,
 		value:       floatValue,

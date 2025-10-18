@@ -38,7 +38,6 @@ type poller struct {
 	snapshotHandler MetricSnapshotHandler
 	pollingInterval time.Duration
 	metricsToPoll   GroupAddressConfigSet
-	cancelFunc      context.CancelFunc
 }
 
 // NewPoller creates a new Poller instance using the given MetricsExporter for connection handling and metrics observing.
@@ -71,12 +70,14 @@ func (p *poller) runInitialReading(ctx context.Context) {
 
 	metricsToRead := getMetricsToRead(p.config)
 	ticker := time.NewTicker(readInterval)
+
+loop:
 	for address, config := range metricsToRead {
 		select {
 		case <-ticker.C:
 			p.sendReadMessage(address, config)
 		case <-ctx.Done():
-			break
+			break loop
 		}
 	}
 	ticker.Stop()
@@ -86,12 +87,12 @@ func (p *poller) runPolling(ctx context.Context) {
 	if p.pollingInterval <= 0 {
 		return
 	}
-	slog.Log(nil, slog.LevelDebug-2, "Start polling group addresses", "pollingInterval", p.pollingInterval)
+	slog.Log(ctx, slog.LevelDebug-2, "Start polling group addresses", "pollingInterval", p.pollingInterval)
 	ticker := time.NewTicker(p.pollingInterval)
 	for {
 		select {
 		case t := <-ticker.C:
-			p.pollAddresses(t)
+			p.pollAddresses(ctx, t)
 		case <-ctx.Done():
 			ticker.Stop()
 			return
@@ -99,12 +100,12 @@ func (p *poller) runPolling(ctx context.Context) {
 	}
 }
 
-func (p *poller) pollAddresses(t time.Time) {
+func (p *poller) pollAddresses(ctx context.Context, t time.Time) {
 	for address, config := range p.metricsToPoll {
 		logger := slog.With("address", address)
 		s := p.snapshotHandler.FindYoungestSnapshot(config.Name)
 		if s == nil {
-			logger.Log(nil, slog.LevelDebug-2, "Initial polling of address")
+			logger.Log(ctx, slog.LevelDebug-2, "Initial polling of address")
 			p.sendReadMessage(address, config)
 			continue
 		}

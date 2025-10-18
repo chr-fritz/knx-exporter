@@ -124,12 +124,13 @@ func (m *metricSnapshots) FindYoungestSnapshot(name string) *Snapshot {
 func (m *metricSnapshots) Run(ctx context.Context) {
 	m.active = true
 	defer func() { m.active = false }()
+loop:
 	for {
 		select {
 		case snap := <-m.metricsChan:
 			m.AddSnapshot(snap)
 		case <-ctx.Done():
-			break
+			break loop
 		}
 	}
 }
