@@ -15,6 +15,7 @@
 package logging
 
 import (
+	"context"
 	"log/slog"
 	"testing"
 
@@ -60,14 +61,15 @@ func Test_loggerConfig_Initialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.TODO()
 			lc := &loggerConfig{
 				level:         tt.level,
 				formatterName: tt.format,
 			}
 			lc.Initialize()
 			logger := slog.With("dummy")
-			assert.True(t, logger.Enabled(nil, tt.expectedLevel))
-			assert.False(t, logger.Enabled(nil, tt.expectedLevel-1))
+			assert.True(t, logger.Enabled(ctx, tt.expectedLevel))
+			assert.False(t, logger.Enabled(ctx, tt.expectedLevel-1))
 			assert.IsType(t, tt.expectedFormatter, logger.Handler())
 		})
 	}

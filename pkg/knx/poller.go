@@ -113,7 +113,7 @@ func (p *poller) pollAddresses(ctx context.Context, t time.Time) {
 		diff := t.Sub(s.timestamp).Round(time.Second)
 		maxAge := time.Duration(config.MaxAge)
 		if diff >= maxAge {
-			logger.Log(nil, slog.LevelDebug-2,
+			logger.Log(ctx, slog.LevelDebug-2,
 				"Poll address for new value as it is to old",
 				"maxAge", maxAge,
 				"actualAge", diff,
