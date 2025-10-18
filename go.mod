@@ -14,7 +14,7 @@
 
 module github.com/chr-fritz/knx-exporter
 
-go 1.25.0
+go 1.25.3
 
 require (
 	github.com/coreos/go-systemd/v22 v22.6.0
