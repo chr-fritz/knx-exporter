@@ -127,7 +127,10 @@ func (m *metricSnapshots) Run(ctx context.Context) {
 loop:
 	for {
 		select {
-		case snap := <-m.metricsChan:
+		case snap, ok := <-m.metricsChan:
+			if !ok {
+				return
+			}
 			m.AddSnapshot(snap)
 		case <-ctx.Done():
 			break loop

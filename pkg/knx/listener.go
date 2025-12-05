@@ -62,7 +62,10 @@ func (l *listener) Run(ctx context.Context, inbound <-chan knx.GroupEvent) {
 loop:
 	for {
 		select {
-		case msg := <-inbound:
+		case msg, ok := <-inbound:
+			if !ok {
+				return
+			}
 			l.handleEvent(ctx, msg)
 		case <-ctx.Done():
 			break loop
