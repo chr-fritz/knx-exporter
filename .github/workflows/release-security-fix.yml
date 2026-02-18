@@ -34,7 +34,7 @@ jobs:
           extract: true
       - name: Scan Linux release for vulnerabilities
         id: scan_latest_release
-        uses: anchore/scan-action@3c9a191a0fbab285ca6b8530b5de5a642cba332f # v6
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c # v6
         with:
           path: "latest-release"
           fail-build: true
@@ -59,7 +59,7 @@ jobs:
 
       - name: Scan built Linux binary for vulnerabilities
         id: scan_latest_build
-        uses: anchore/scan-action@3c9a191a0fbab285ca6b8530b5de5a642cba332f # v6
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c # v6
         with:
           path: "latest-build"
           fail-build: true
