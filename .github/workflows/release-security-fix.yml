@@ -44,7 +44,7 @@ jobs:
 
       # If we found vulnerabilities, create a build for the default branch, where the vulnerabilities might be fixed
       - name: Set up Go
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v5
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v5
         with:
           go-version-file: go.mod
         if: steps.scan_latest_release.outcome == 'failure'
