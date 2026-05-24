@@ -135,3 +135,9 @@ completions:
 .PHONY: sonarcloud-version
 sonarcloud-version:
 	echo "sonar.projectVersion=$(VERSION)" >> sonar-project.properties
+
+.PHONY: upgrade-deps
+upgrade-deps:
+	go get toolchain
+	go get -t -u
+	go mod tidy
